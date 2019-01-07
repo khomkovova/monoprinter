@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="js/style.css">
+    <title>Signin to command center</title>
+
+</head>
+<body>
+<footer>
+    <a class="link" href="signup">Signup</a>
+    <a class="link" href="main">Main</a>
+</footer>
+<script src="js/jquery-3.3.1.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/axios.min.js"></script>
+<div class="header">
+    <h1>Login</h1>
+</div>
+<dir id="app">
+    <p>{{error}}</p>
+
+
+    <div class="input-group">
+    Username:<label>
+    <input type="text"  v-on:input="username=$event.target.value" class="input-group">
+</label>
+    </div>
+        <div class="input-group">
+    Password:<label>
+    <input type="password" v-on:input="password=$event.target.value">
+</label>
+        </div>
+
+    <button class="btn" v-on:click="signin">Signin</button>
+
+</dir>
+
+<script src="js/vue.js"></script>
+<script src="js/signin.js"></script>
+
+</body>
+</html>
