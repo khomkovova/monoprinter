@@ -1,0 +1,22 @@
+{
+  "Databases": {
+    "Mysql": {
+      "Database_name" : "railway",
+      "Host": "127.0.0.1",
+      "Username": "root",
+      "Password" : "Remidolov@12345"
+    },
+    "MongoDb": {
+      "Database_name" : "test2",
+      "Host": "127.0.0.1",
+      "Username": "",
+      "Password" : ""
+    },
+    "Redis": {
+      "Host": "127.0.0.1",
+      "Username": "",
+      "Password" : ""
+    }
+
+  }
+}
