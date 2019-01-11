@@ -1,6 +1,7 @@
 package main
 
 import (
+	"MonoPrinter/config"
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
@@ -9,14 +10,21 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 )
 var cache redis.Conn
 var mysqlDb sql.DB
 var mongoUsersCollection mgo.Collection
 var mongoGridFS mgo.GridFS
 var mongoPrinterCollection mgo.Collection
-func main() {
 
+func main() {
+	test()
+	err := initAll()
+	if err != nil{
+		fmt.Println("Not init preference")
+		os.Exit(1)
+	}
 	fsJs := http.FileServer(http.Dir("public/js"))
 	http.Handle("/js/", http.StripPrefix("/js/", fsJs))
 	fsCss := http.FileServer(http.Dir("public/css"))
@@ -39,22 +47,22 @@ func main() {
 	log.Fatal(http.Serve(l, nil))
 }
 
-func initMongoDb() {
-	session, err := mgo.Dial("127.0.0.1")
+func initMongoDb(conf config.MongodbConf) {
+	session, err := mgo.Dial(conf.Host)
 	if err != nil {
 		fmt.Println("Don't connect to mongodb")
 	}
 	session.SetMode(mgo.Monotonic, true)
-	c := session.DB("test2").C("test2")
-	cP := session.DB("test2").C("printers")
-	grfs := session.DB("test2").GridFS("fs")
+	c := session.DB(conf.DatabaseName).C("test2")
+	cP := session.DB(conf.DatabaseName).C("printers")
+	grfs := session.DB(conf.DatabaseName).GridFS("fs")
 	mongoGridFS = *grfs
 	mongoUsersCollection = *c
 	mongoPrinterCollection = *cP
 }
 
-func initMysql()  {
-	var conn, err = sql.Open("mysql", "root:Remidolov12345@@/railway?charset=utf8")
+func initMysql(conf config.MysqlConf)  {
+	var conn, err = sql.Open("mysql", conf.Username + ":" + conf.Password + "@/" + conf.DatabaseName + "?charset=utf8")
 	if err != nil {
 		fmt.Println("Don't connect to mysql")
 		return
@@ -62,8 +70,8 @@ func initMysql()  {
 	mysqlDb = *conn
 }
 
-func initCache() {
-	conn, err := redis.DialURL("redis://localhost")
+func initCache(conf config.RedisConf) {
+	conn, err := redis.DialURL("redis://" + conf.Host)
 	if err != nil {
 		fmt.Println("Don't connect to redis")
 		return
@@ -71,11 +79,22 @@ func initCache() {
 	cache = conn
 }
 
-func init()  {
+func initAll() error {
 
 	go CheckOrders()
-	initCache()
-	initMysql()
-	initMongoDb()
+	var conf config.Configuration
+	err := conf.ParseConfig()
+	if err != nil{
+		return err
+	}
+	initCache(conf.Databases.Redis)
+	initMysql(conf.Databases.Mysql)
+	initMongoDb(conf.Databases.MongoDb)
+	return nil
+
+}
+
+func test()  {
+
 
 }
