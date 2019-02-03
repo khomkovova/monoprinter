@@ -39,7 +39,7 @@ func (printer *Printer) addPrintingTime(printingTimeStr string, delay int) error
 	printer.PrinterInfo.TimeLine = nil
 	for i := 0; i < len(TL); i++{
 		printTime, _ := time.Parse(layout, TL[i].Date)
-		if printTime.Before(time.Now()){
+		if printTime.After(time.Now()){
 			printer.PrinterInfo.TimeLine = append(printer.PrinterInfo.TimeLine, TL[i])
 		}
 	}
