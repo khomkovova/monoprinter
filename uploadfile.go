@@ -101,7 +101,7 @@ func (uploadFile *UploadFile ) getPDF() error {
 	uploadFile.Info.Size = fileExif[0].FileSize
 	uploadFile.Info.UploadDate = fileExif[0].CreateDate
 	uploadFile.FilePdf = pdfFile
-	uploadFile.Info.Status = "Waiting for printing"
+	uploadFile.Info.Status = "STATUS_WAITING_DOWNLOAD"
 	return nil
 
 }

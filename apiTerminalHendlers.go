@@ -2,8 +2,8 @@ package main
 
 import (
 	"MonoPrinter/rsaparser"
-	"crypto/rand"
 	"crypto/rsa"
+	"crypto/rand"
 	"crypto/sha256"
 	_ "database/sql"
 	"encoding/base64"
@@ -27,6 +27,9 @@ import (
 //	IdPrinter int
 //	Status string
 //}
+const STATUS_WAITING_DOWNLOAD  = "STATUS_WAITING_DOWNLOAD"
+const STATUS_WAITING_DELETE_FROM_TERMINAL  = "STATUS_WAITING_DELETE_FROM_TERMINAL"
+
 func ApiTerminalFiles(w http.ResponseWriter, r *http.Request)  {
 	cookie, err := r.Cookie("token")
 	if err != nil {
