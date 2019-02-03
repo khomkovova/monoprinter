@@ -20,6 +20,7 @@ type PrinterInfo struct {
 	TimeLine[] TimeLine `bson:"TimeLine"`
 }
 var PrintigDelay = time.Second * 29
+var layout = "2006-01-02T15:04:05"
 func (printer *Printer) addPrintingTime(printingTimeStr string, delay int) error {
 
 	err := printer.getNewInfo()
@@ -28,15 +29,20 @@ func (printer *Printer) addPrintingTime(printingTimeStr string, delay int) error
 	}
 
 	index, err := printer.getPrintingTimeIndex(printingTimeStr, delay)
-	fmt.Println("index = ", index)
 	if err != nil {
 		return err
 	}
 	var timeLine TimeLine
 	timeLine.Date = printingTimeStr
 	timeLine.Delay = delay
-	printer.PrinterInfo.TimeLine = append(printer.PrinterInfo.TimeLine[:index], append([]TimeLine{timeLine}, printer.PrinterInfo.TimeLine[index:]...)...)
-	fmt.Println(printer.PrinterInfo.TimeLine)
+	TL := append(printer.PrinterInfo.TimeLine[:index], append([]TimeLine{timeLine}, printer.PrinterInfo.TimeLine[index:]...)...)
+	printer.PrinterInfo.TimeLine = nil
+	for i := 0; i < len(TL); i++{
+		printTime, _ := time.Parse(layout, TL[i].Date)
+		if printTime.Before(time.Now()){
+			printer.PrinterInfo.TimeLine = append(printer.PrinterInfo.TimeLine, TL[i])
+		}
+	}
 	err = printer.setNewInfo()
 	if err != nil {
 		return err
@@ -69,7 +75,7 @@ func (printer *Printer) setNewInfo() error {
 
 // get index for printing time in TimeLine and Check info delay = time for printing
 func (printer *Printer)  getPrintingTimeIndex(printingTimeStr string, delay int) (int, error) {
-	layout := "2006-01-02T15:04:05"
+
 	fmt.Println(printingTimeStr)
 	printingTime, err := time.Parse(layout, printingTimeStr)
 	if err != nil {
