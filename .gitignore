@@ -1,1 +1,4 @@
-./config/terminalPrivateKey.key
+terminalPrivateKey.key
+terminalPublicKey.key
+config.json
+.idea
