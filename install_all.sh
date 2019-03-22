@@ -18,7 +18,7 @@ case $i in
     aws_secret_access_key="${i#*=}"
     ;;
     -ar=*|--aws_region=*)
-    aws_access_key_id="${i#*=}"
+    aws_region="${i#*=}"
     ;;
 
     
