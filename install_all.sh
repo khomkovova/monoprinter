@@ -82,6 +82,6 @@ cat   ~/.aws/credentials
 aws s3 cp --recursive  s3://monoprinter/ . 
 ls -lah
 mongorestore --db monoprinter backup/mongodb/monoprinter
-mysql -u root -p   < backup/mysql/monoprinter.sql
+mysql -u root   < backup/mysql/monoprinter.sql
 go build
 exit 0
