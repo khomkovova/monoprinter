@@ -1,3 +1,6 @@
+
+#!/bin/bash
+
 for i in "$@"
 do
 case $i in
@@ -17,19 +20,52 @@ case $i in
     -ar=*|--aws_region=*)
     aws_access_key_id="${i#*=}"
     ;;
+
     
     *)
           printf 'SET ALL OPTIONS:\n git_username \n git_password \n aws_access_key_id \n aws_secret_access_key \n aws_region \n'  # unknown option
     ;;
 esac
 done
+if [ "$git_password" == "" ] 
+then 
+	echo "SET git_password"
+	exit 0
+fi
 
-git_username
-git_password
-aws_access_key_id
-aws_secret_access_key
-aws_region
+if [ "$git_username" == "" ] 
+then 
+	echo "SET git_username"
+	exit 0
+fi
 
+if [ "$aws_access_key_id" == "" ] 
+then 
+	echo "SET aws_access_key_id"
+	exit 0
+fi
+
+if [ "$aws_secret_access_key" == "" ] 
+then 
+	echo "SET aws_secret_access_key"
+	exit 0
+fi
+
+if [ "$aws_region" == "" ] 
+then 
+	echo "SET aws_region"
+	exit 0
+fi
+
+# git_username
+# git_password
+# aws_access_key_id
+# aws_secret_access_key
+# aws_region
+
+service mongodb start
+service mysql start
+service --status-all
 cd /go/src && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git 
 cd /go/src/MonoPrinter 
 git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinterConfig.git
@@ -42,4 +78,5 @@ aws s3 cp --recursive  s3://monoprinter/ .
 ls -lah
 mongorestore --db monoprinter backup/mongodb/monoprinter
 mysql -u root -p   < backup/mysql/monoprinter.sql
-go build 
+go build
+exit 0
