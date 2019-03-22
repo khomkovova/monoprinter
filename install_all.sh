@@ -68,6 +68,7 @@ aws configure set aws_secret_access_key $aws_secret_access_key
 aws configure set region $aws_region
 
 service mongodb start
+service mongodb status
 service mysql start
 service --status-all
 
