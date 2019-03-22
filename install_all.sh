@@ -62,6 +62,7 @@ fi
 # aws_access_key_id
 # aws_secret_access_key
 # aws_region
+echo "$@"
 aws configure set aws_access_key_id $aws_access_key_id 
 aws configure set aws_secret_access_key $aws_secret_access_key
 aws configure set region $aws_region
