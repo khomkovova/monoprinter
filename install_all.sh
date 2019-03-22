@@ -81,11 +81,11 @@ cp MonoPrinterConfig/liqpay_config.json liqpay/config.json
 cp MonoPrinterConfig/main_config.json config/config.json
 mysql_password=$(cat config/config.json |  python -c 'import json,sys;obj=json.load(sys.stdin);print obj["Databases"]["Mysql"]["Password"]')
 mysql --user=root --password=root -e "UPDATE mysql.user set authentication_string=password('$mysql_password') where user='root'; FLUSH PRIVILEGES;"
-# cat   ~/.aws/credentials
-# aws s3 cp --recursive  s3://monoprinter/ .
-# ls -lah
-# mongorestore --db monoprinter backup/mongodb/monoprinter
-# mysql -u root   < backup/mysql/monoprinter.sql
-# ls -lah
-# go build
-# exit 0
+cat   ~/.aws/credentials
+aws s3 cp --recursive  s3://monoprinter/ .
+ls -lah
+mongorestore --db monoprinter backup/mongodb/monoprinter
+mysql -u root   < backup/mysql/monoprinter.sql
+ls -lah
+go build
+exit 0
