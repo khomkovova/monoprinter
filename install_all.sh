@@ -78,7 +78,7 @@ ls -lah
 cp MonoPrinterConfig/liqpay_config.json liqpay/config.json
 cp MonoPrinterConfig/main_config.json config/config.json
 mysql_password=$(cat config/config.json |  python -c 'import json,sys;obj=json.load(sys.stdin);print obj["Databases"]["Mysql"]["Password"]')
-
+cat   ~/.aws/credentials
 aws s3 cp --recursive  s3://monoprinter/ . 
 ls -lah
 mongorestore --db monoprinter backup/mongodb/monoprinter
