@@ -74,7 +74,7 @@ service mysql start
 service --status-all
 
 # cd /go/src && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git 
-# cd /go/src/MonoPrinter 
+cd /go/src/
 git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinterConfig.git
 ls -lah
 cp MonoPrinterConfig/liqpay_config.json liqpay/config.json
@@ -85,7 +85,7 @@ cat   ~/.aws/credentials
 aws s3 cp --recursive  s3://monoprinter/ .
 ls -lah
 mongorestore --db monoprinter backup/mongodb/monoprinter
-mysql -u root   < backup/mysql/monoprinter.sql
+mysql -u root --password=$mysql_password  < backup/mysql/monoprinter.sql
 ls -lah
 go build
 exit 0
