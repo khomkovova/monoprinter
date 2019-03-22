@@ -69,8 +69,10 @@ aws configure set aws_secret_access_key $aws_secret_access_key
 aws configure set region $aws_region
 
 service mongodb start
-service mongodb status
 service mysql start
+redis-server &
+service mongodb status
+
 service --status-all
 
 # cd /go/src && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git 
@@ -87,5 +89,6 @@ ls -lah
 mongorestore --db monoprinter backup/mongodb/monoprinter
 mysql -u root --password=$mysql_password  < backup/mysql/monoprinter.sql
 ls -lah
+go get -d ./...
 go build
 exit 0
