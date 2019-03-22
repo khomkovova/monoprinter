@@ -74,7 +74,7 @@ service mysql start
 service --status-all
 
 # cd /go/src && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git 
-cd /go/src/
+
 git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinterConfig.git
 ls -lah
 cp MonoPrinterConfig/liqpay_config.json liqpay/config.json
