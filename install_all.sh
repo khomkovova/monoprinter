@@ -63,6 +63,7 @@ fi
 # aws_secret_access_key
 # aws_region
 echo "$@"
+
 aws configure set aws_access_key_id $aws_access_key_id 
 aws configure set aws_secret_access_key $aws_secret_access_key
 aws configure set region $aws_region
@@ -79,10 +80,11 @@ ls -lah
 cp MonoPrinterConfig/liqpay_config.json liqpay/config.json
 cp MonoPrinterConfig/main_config.json config/config.json
 mysql_password=$(cat config/config.json |  python -c 'import json,sys;obj=json.load(sys.stdin);print obj["Databases"]["Mysql"]["Password"]')
-cat   ~/.aws/credentials
-aws s3 cp --recursive  s3://monoprinter/ . 
-ls -lah
-mongorestore --db monoprinter backup/mongodb/monoprinter
+mysql --user=root --password=root -e "UPDATE mysql.user set authentication_string=password('$mysql_password') where user='root'; FLUSH PRIVILEGES;"
+# cat   ~/.aws/credentials
+# aws s3 cp --recursive  s3://monoprinter/ .
+# ls -lah
+# mongorestore --db monoprinter backup/mongodb/monoprinter
 # mysql -u root   < backup/mysql/monoprinter.sql
 # ls -lah
 # go build
