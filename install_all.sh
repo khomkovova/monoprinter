@@ -62,12 +62,16 @@ fi
 # aws_access_key_id
 # aws_secret_access_key
 # aws_region
+aws configure set aws_access_key_id $aws_access_key_id 
+aws configure set aws_secret_access_key $aws_secret_access_key
+aws configure set region $aws_region
 
 service mongodb start
 service mysql start
 service --status-all
-cd /go/src && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git 
-cd /go/src/MonoPrinter 
+
+# cd /go/src && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git 
+# cd /go/src/MonoPrinter 
 git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinterConfig.git
 ls -lah
 cp MonoPrinterConfig/liqpay_config.json liqpay/config.json
