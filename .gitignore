@@ -4,3 +4,5 @@ config.json
 .idea
 MonoPrinterConfig
 liqpay/config.json
+MonoPrinter
+backup
