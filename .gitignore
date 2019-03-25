@@ -2,3 +2,5 @@ terminalPrivateKey.key
 terminalPublicKey.key
 config.json
 .idea
+MonoPrinterConfig
+liqpay/config.json
