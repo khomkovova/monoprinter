@@ -1,0 +1,6 @@
+Steps to run:
+  * Clone https://github.com/khomkovova/MonoPrinterConfig.git
+  * Run backup_download.sh
+  * docker build .
+  * docker run sudo docker run -it -v `pwd`:/go/src/MonoPrinter DOCKER_ID
+  * 
