@@ -5,7 +5,7 @@ FROM ubuntu:18.04
 RUN apt-get update
 RUN apt-get install -y wget git gcc golang  mongodb
 RUN apt-get install -y redis-server
-RUN apt-get install -y python-pip
+RUN apt-get install -y python-pip net-tools vim lsof 
 RUN pip install awscli
 
 RUN echo "mysql-server mysql-server/root_password password root" | debconf-set-selections
@@ -36,9 +36,9 @@ RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
 
 # CMD /bin/bash -c "ls -lah"
-# CMD /bin/bash
 
-CMD  ["/bin/bash", "-c", "cd /go/src/ && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git && cd MonoPrinter && chmod 744 ./install_all.sh  && ./install_all.sh --git_username=$git_username --git_password=$git_password --aws_access_key_id=$aws_access_key_id --aws_secret_access_key=$aws_secret_access_key --aws_region=$aws_region && /bin/bash"]
+CMD cd /go/src/MonoPrinter && bash setup.sh  && /bin/bash
+# CMD  ["/bin/bash", "-c", "cd /go/src/ && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git && cd MonoPrinter && chmod 744 ./install_all.sh  && ./install_all.sh --git_username=$git_username --git_password=$git_password --aws_access_key_id=$aws_access_key_id --aws_secret_access_key=$aws_secret_access_key --aws_region=$aws_region && /bin/bash"]
 # ENTRYPOINT [""]
 # WORKDIR /go/src/MonoPrinter
 # CMD tail -f /dev/null
