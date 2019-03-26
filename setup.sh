@@ -17,7 +17,9 @@ mysql --user=root --password=root -e "UPDATE mysql.user set authentication_strin
 
 mongorestore --db monoprinter backup/mongodb/monoprinter
 mysql -u root --password=$mysql_password  < backup/mysql/monoprinter.sql
-echo -e "\e[33mWaiting download dependensi"
+echo -e "\e[33mWaiting download dependency"
+go get -u github.com/go-delve/delve/cmd/dlv
+chmod 777 /go/bin/dlv
 go get -d ./...
 go build
 ./MonoPrinter &
