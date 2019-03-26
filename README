@@ -3,4 +3,4 @@ Steps to run:
   * Run backup_download.sh
   * docker build .
   * docker run sudo docker run -it -v `pwd`:/go/src/MonoPrinter DOCKER_ID
-  * 
+  * For debuging run docker run -it -v `pwd`:/go/src/MonoPrinter -p 9999:9999 -p 2222:22 --security-opt seccomp=unconfined 090bd7ff8f7b
