@@ -4,3 +4,4 @@ Steps to run:
   * docker build .
   * docker run sudo docker run -it -v `pwd`:/go/src/MonoPrinter DOCKER_ID
   * For debuging run docker run -it -v `pwd`:/go/src/MonoPrinter -p 9999:9999 -p 2222:22 --security-opt seccomp=unconfined 090bd7ff8f7b
+  * Run new console docker exec -it 25664bfd72e2 /bin/bash
