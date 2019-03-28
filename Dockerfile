@@ -2,11 +2,15 @@
 
 FROM ubuntu:18.04
 
-RUN apt-get update
+RUN apt-get update -qq 
+RUN apt-get -y install -qq  apt-utils
+# RUN apt-get -y upgrade
+RUN apt-get install -y libreoffice 
 RUN apt-get install -y wget git gcc golang  mongodb
 RUN apt-get install -y redis-server
 RUN apt-get install -y python-pip net-tools vim lsof 
 RUN pip install awscli
+RUN apt-get install -y exiftool 
 
 RUN echo "mysql-server mysql-server/root_password password root" | debconf-set-selections
 RUN echo "mysql-server mysql-server/root_password_again password root" | debconf-set-selections
