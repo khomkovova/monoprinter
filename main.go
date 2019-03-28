@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 )
+
 var cache redis.Conn
 var mysqlDb sql.DB
 var mongoUsersCollection mgo.Collection
@@ -21,7 +22,7 @@ var mongoPrinterCollection mgo.Collection
 func main() {
 	test()
 	err := initAll()
-	if err != nil{
+	if err != nil {
 		fmt.Println("Not init preference")
 		os.Exit(1)
 	}
@@ -62,8 +63,8 @@ func initMongoDb(conf config.MongodbConf) {
 	mongoPrinterCollection = *cP
 }
 
-func initMysql(conf config.MysqlConf)  {
-	var conn, err = sql.Open("mysql", conf.Username + ":" + conf.Password + "@/" + conf.DatabaseName + "?charset=utf8")
+func initMysql(conf config.MysqlConf) {
+	var conn, err = sql.Open("mysql", conf.Username+":"+conf.Password+"@/"+conf.DatabaseName+"?charset=utf8")
 	if err != nil {
 		fmt.Println("Don't connect to mysql")
 		return
@@ -85,7 +86,7 @@ func initAll() error {
 	go CheckOrders()
 	var conf config.Configuration
 	err := conf.ParseConfig()
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	initCache(conf.Databases.Redis)
@@ -95,7 +96,6 @@ func initAll() error {
 
 }
 
-func test()  {
-
+func test() {
 
 }

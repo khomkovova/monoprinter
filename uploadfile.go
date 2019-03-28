@@ -16,31 +16,31 @@ import (
 )
 
 type UploadFile struct {
-	 Info FileInfo
-	 File multipart.File
-	 FilePdf* os.File
+	Info    FileInfo
+	File    multipart.File
+	FilePdf *os.File
 }
-type  FileExif struct {
-	FileSize string `json:"FileSize"`
-	PageCount int `json:"PageCount"`
+type FileExif struct {
+	FileSize   string `json:"FileSize"`
+	PageCount  int    `json:"PageCount"`
 	CreateDate string `json:"CreateDate"`
 }
-func (uploadFile *UploadFile ) getPDF() error {
 
-	nameFile :=RandStringRunes()
+func (uploadFile *UploadFile) getPDF() error {
+
+	nameFile := RandStringRunes()
 	convertFile, err := os.Create(nameFile)
-	if err != nil{
+	if err != nil {
 		return errors.New("Not create Pdf file")
 	}
 	_, err = io.Copy(convertFile, uploadFile.File)
-	if err != nil{
+	if err != nil {
 		return errors.New("Not copy context to Pdf file")
 	}
 	_ = convertFile.Close()
 
-
 	arg := " --headless --convert-to pdf " + nameFile
-	cmd := exec.Command("sh","-c","soffice "+ arg )   // Convert file to pdf
+	cmd := exec.Command("sh", "-c", "soffice "+arg) // Convert file to pdf
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err = cmd.Start()
@@ -56,31 +56,31 @@ func (uploadFile *UploadFile ) getPDF() error {
 	select {
 	case <-time.After(10000 * time.Second):
 		if err := cmd.Process.Kill(); err != nil {
-			log.Fatal("failed to kill process: ", err)
+			log.Fatal("soffice failed to kill process: ", err)
 			return err
 		}
-		log.Println("process killed as timeout reached")
+		log.Println("soffice process killed as timeout reached")
 		return err
 	case err := <-done:
 		if err != nil {
-			log.Fatalf("process finished with error = %v", err)
+			log.Fatalf("soffice process finished with error = %v", err)
 			return err
 		}
 		//fmt.Println("process finished successfully")
 		_ = os.Remove(nameFile)
 	}
 	err = checkSofficeReport(out.String())
-	if err != nil{
+	if err != nil {
 		_ = os.Remove(nameFile + ".pdf")
 		return err
 	}
 	pdfFile, err := os.Open(nameFile + ".pdf")
-	if err != nil{
+	if err != nil {
 		return errors.New("Not open pdf file")
 	}
 	arg = "-json " + nameFile + ".pdf"
 
-	cmdExifTool := exec.Command("sh","-c", "exiftool " + arg ) // Run exiftool for get file info
+	cmdExifTool := exec.Command("sh", "-c", "exiftool "+arg) // Run exiftool for get file info
 	var outExifTool bytes.Buffer
 	cmdExifTool.Stdout = &outExifTool
 	err = cmdExifTool.Run()
@@ -90,11 +90,11 @@ func (uploadFile *UploadFile ) getPDF() error {
 	_ = os.Remove(nameFile + ".pdf")
 	var fileExif []FileExif
 	report := outExifTool.String()
-	if strings.Contains(report, "File not found" ){
+	if strings.Contains(report, "File not found") {
 		return errors.New("Exiftool return File not found")
 	}
 	err = json.Unmarshal([]byte(report), &fileExif)
-	if err != nil{
+	if err != nil {
 		return errors.New("Not parse exiftool report")
 	}
 	uploadFile.Info.NumberPage = fileExif[0].PageCount
@@ -105,8 +105,6 @@ func (uploadFile *UploadFile ) getPDF() error {
 	return nil
 
 }
-
-
 
 func RandStringRunes() string {
 	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

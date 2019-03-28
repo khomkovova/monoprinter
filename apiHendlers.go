@@ -16,22 +16,21 @@ type CredentialsSignin struct {
 }
 
 type CredentialsRegistration struct {
-	Password string `json:"password"`
-	Username string `json:"username"`
-	Email string `json:"email"`
+	Password    string `json:"password"`
+	Username    string `json:"username"`
+	Email       string `json:"email"`
 	NumberPhone string `json:"numberphone"`
 }
 
-
-func ApiMain(w http.ResponseWriter, r *http.Request){
+func ApiMain(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCookie(r)
-	if username == ""{
+	if username == "" {
 		fmt.Println("Bad cookie")
 	}
 	fmt.Println("Yor username =", username)
 }
 
-func ApiSignin(w http.ResponseWriter, r *http.Request)  {
+func ApiSignin(w http.ResponseWriter, r *http.Request) {
 	var creds CredentialsSignin
 
 	err := json.NewDecoder(r.Body).Decode(&creds)
@@ -42,12 +41,12 @@ func ApiSignin(w http.ResponseWriter, r *http.Request)  {
 
 	var username string
 	err = mysqlDb.QueryRow("SELECT username FROM users WHERE username=? AND password=?", creds.Username, creds.Password).Scan(&username)
-	if err != nil || username == ""{
+	if err != nil || username == "" {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	cookie := makeCookie(creds.Username)
-	if cookie.Value == ""{
+	if cookie.Value == "" {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -55,7 +54,7 @@ func ApiSignin(w http.ResponseWriter, r *http.Request)  {
 	w.WriteHeader(http.StatusOK)
 }
 
-func ApiSignup(w http.ResponseWriter, r *http.Request)  {
+func ApiSignup(w http.ResponseWriter, r *http.Request) {
 
 	var creds CredentialsRegistration
 	err := json.NewDecoder(r.Body).Decode(&creds)
@@ -68,33 +67,30 @@ func ApiSignup(w http.ResponseWriter, r *http.Request)  {
 	newUsers.Email = creds.Email
 	newUsers.NumberPhone = creds.NumberPhone
 	err = newUsers.checkUser()
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		_, _ = w.Write([]byte("This users is registered"))
 		return
 	}
 	err = newUsers.createNewUser()
-	if err != nil{
+	if err != nil {
 		_, _ = w.Write([]byte("Bad creds"))
 		return
 	}
 
-	id, err := mysqlDb.Query("INSERT INTO users (username,password)" + "VALUES ('" + creds.Username + "','" + creds.Password + "')" )
-	if err != nil{
+	id, err := mysqlDb.Query("INSERT INTO users (username,password)" + "VALUES ('" + creds.Username + "','" + creds.Password + "')")
+	if err != nil {
 		_, _ = w.Write([]byte("This username using or your credentials is not correct"))
 		return
 	}
 	_ = id.Close()
 
-
 	_, _ = w.Write([]byte("You success registered"))
 	w.WriteHeader(http.StatusOK)
 
-	}
+}
 
-
-func ApiGetShortUserInfo(w http.ResponseWriter, r *http.Request)  {
-	fmt.Println("99999")
+func ApiGetShortUserInfo(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCookie(r)
 	if username == "" {
 		_, _ = w.Write([]byte("Bad cookies"))
@@ -103,22 +99,22 @@ func ApiGetShortUserInfo(w http.ResponseWriter, r *http.Request)  {
 	var user UserInfo
 	user.Username = username
 	err := user.getInfo()
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
 
 	infoJson, err := user.makeStringJsonInfo()
-	if err != nil{
+	if err != nil {
 		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
 	_, _ = w.Write([]byte(infoJson))
 	return
-	}
+}
 
-func ApiUpdateUserInfo(w http.ResponseWriter, r *http.Request)  {
+func ApiUpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCookie(r)
 	if username == "" {
 		_, _ = w.Write([]byte("Bad cookies"))
@@ -127,7 +123,7 @@ func ApiUpdateUserInfo(w http.ResponseWriter, r *http.Request)  {
 	var user UserInfo
 	user.Username = username
 	err := user.getInfo()
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		_, _ = w.Write([]byte(err.Error()))
 		return
@@ -135,7 +131,7 @@ func ApiUpdateUserInfo(w http.ResponseWriter, r *http.Request)  {
 	user.NumberPhone = "1111111111"
 
 	err = user.updateInfo()
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -144,18 +140,17 @@ func ApiUpdateUserInfo(w http.ResponseWriter, r *http.Request)  {
 
 }
 
-func ApiUploadFile(w http.ResponseWriter, r *http.Request)  {
+func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCookie(r)
 	if username == "" {
 		_, _ = w.Write([]byte("Bad cookies"))
 		return
 	}
 
-
 	var user UserInfo
 	user.Username = username
 	err := user.getInfo()
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		_, _ = w.Write([]byte(err.Error()))
 		return
@@ -167,7 +162,7 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request)  {
 		return
 	}
 
-	if (len(r.MultipartForm.Value["json"]) == 0){
+	if len(r.MultipartForm.Value["json"]) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -180,26 +175,24 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request)  {
 		return
 	}
 	file, _, err := r.FormFile("uploadfile")
-	if err != nil{
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	uploadFile.File = file
 
-
 	err = user.addFile(uploadFile)
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		_, _ = w.Write([]byte("not add file"))
 		return
 	}
 	_, _ = w.Write([]byte("Success upload"))
 
-
 }
 
-func ApiDeleteFile (w http.ResponseWriter, r *http.Request){
+func ApiDeleteFile(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCookie(r)
 	if username == "" {
 		_, _ = w.Write([]byte("Bad cookies"))
@@ -208,7 +201,7 @@ func ApiDeleteFile (w http.ResponseWriter, r *http.Request){
 	var user UserInfo
 	user.Username = username
 	err := user.getInfo()
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		_, _ = w.Write([]byte(err.Error()))
 		return
@@ -230,7 +223,7 @@ func ApiDeleteFile (w http.ResponseWriter, r *http.Request){
 	_, _ = w.Write([]byte("Success deleted"))
 }
 
-func ApiLiqpayData (w http.ResponseWriter, r *http.Request){
+func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	username := getUsernameFromCookie(r)
 	if username == "" {
 		_, _ = w.Write([]byte("Bad cookies"))
@@ -257,25 +250,24 @@ func ApiLiqpayData (w http.ResponseWriter, r *http.Request){
 	var user UserInfo
 	user.Username = username
 	err = user.addOrder(orderId, "wait_accept")
-	if err != nil{
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	err = newOrder.MakeRequestData()
-	if err != nil{
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	requestData := newOrder.GetRequestData()
 	_, _ = w.Write([]byte(requestData))
 
-
 }
 
-func ApiCheckOrderId(w http.ResponseWriter, r *http.Request){
+func ApiCheckOrderId(w http.ResponseWriter, r *http.Request) {
 	data := r.PostFormValue("data")
 	sDec, err := b64.StdEncoding.DecodeString(data)
-	if err != nil{
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -284,7 +276,7 @@ func ApiCheckOrderId(w http.ResponseWriter, r *http.Request){
 	}
 	var dataJson DataJson
 	err = json.Unmarshal([]byte(sDec), &dataJson)
-	if err != nil{
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	exitingOrder := liqpay.SetupExitingOrder()
@@ -294,23 +286,23 @@ func ApiCheckOrderId(w http.ResponseWriter, r *http.Request){
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	err, user, count := exitingOrder.GetUsernameAndCountMoney()
-	if err != nil{
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if orderInfo.Status == "wait_accept"{
+	if orderInfo.Status == "wait_accept" {
 		var u UserInfo
 		err, status := u.getOrderStatus(orderInfo.OrderId)
 		fmt.Println(status)
-		if err != nil{
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		if status == "wait_accept"{
+		if status == "wait_accept" {
 			u.Username = user
 			err = u.addPage(count)
-			if err != nil{
+			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
@@ -325,13 +317,13 @@ func ApiCheckOrderId(w http.ResponseWriter, r *http.Request){
 func makeCookie(username string) http.Cookie {
 	sessionToken, err := uuid.NewV4()
 	if err != nil {
-		return http.Cookie{Name:"token", Value:""}
+		return http.Cookie{Name: "token", Value: ""}
 	}
 	_, err = cache.Do("SETEX", sessionToken.String(), "1000", username)
 	if err != nil {
-		return http.Cookie{Name:"token", Value:""}
+		return http.Cookie{Name: "token", Value: ""}
 	}
-	return http.Cookie{Name:"token", Value:sessionToken.String()}
+	return http.Cookie{Name: "token", Value: sessionToken.String()}
 }
 
 func getUsernameFromCookie(r *http.Request) string {
@@ -353,9 +345,3 @@ func getUsernameFromCookie(r *http.Request) string {
 	username := fmt.Sprintf("%s", response)
 	return username
 }
-
-
-
-
-
-
