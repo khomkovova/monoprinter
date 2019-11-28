@@ -5,5 +5,5 @@ config.json
 MonoPrinterConfig
 liqpay/config.json
 MonoPrinter
-backup
+
 temp*
