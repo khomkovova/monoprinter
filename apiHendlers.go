@@ -7,7 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/satori/go.uuid"
+	"gopkg.in/mgo.v2/bson"
+	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type CredentialsSignin struct {
@@ -31,6 +34,8 @@ func ApiMain(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiSignin(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	var creds CredentialsSignin
 
 	err := json.NewDecoder(r.Body).Decode(&creds)
@@ -51,11 +56,13 @@ func ApiSignin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, &cookie)
+
 	w.WriteHeader(http.StatusOK)
 }
 
 func ApiSignup(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	var creds CredentialsRegistration
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
@@ -91,6 +98,8 @@ func ApiSignup(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiGetShortUserInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	username := getUsernameFromCookie(r)
 	if username == "" {
 		_, _ = w.Write([]byte("Bad cookies"))
@@ -115,6 +124,8 @@ func ApiGetShortUserInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiUpdateUserInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	username := getUsernameFromCookie(r)
 	if username == "" {
 		_, _ = w.Write([]byte("Bad cookies"))
@@ -141,6 +152,8 @@ func ApiUpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	username := getUsernameFromCookie(r)
 	if username == "" {
 		_, _ = w.Write([]byte("Bad cookies"))
@@ -193,6 +206,8 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiDeleteFile(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	username := getUsernameFromCookie(r)
 	if username == "" {
 		_, _ = w.Write([]byte("Bad cookies"))
@@ -224,6 +239,8 @@ func ApiDeleteFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	username := getUsernameFromCookie(r)
 	if username == "" {
 		_, _ = w.Write([]byte("Bad cookies"))
@@ -249,6 +266,12 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	orderId := newOrder.GetOrderId()
 	var user UserInfo
 	user.Username = username
+	err = user.getInfo()
+	if err != nil {
+		fmt.Println(err)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
 	err = user.addOrder(orderId, "wait_accept")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -265,6 +288,8 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiCheckOrderId(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	data := r.PostFormValue("data")
 	sDec, err := b64.StdEncoding.DecodeString(data)
 	if err != nil {
@@ -311,7 +336,56 @@ func ApiCheckOrderId(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+}
 
+func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
+	username := getUsernameFromCookie(r)
+	if username == "" {
+		_, _ = w.Write([]byte("Bad cookies"))
+		return
+	}
+
+	if r.Method == "GET" {
+		keys, _ := r.URL.Query()["uniqueid"]
+		if len(keys) > 0 {
+			uniqueid := keys[0]
+			file, err := mongoGridFS.OpenId(bson.ObjectIdHex(uniqueid))
+			if err != nil {
+				_, _ = w.Write([]byte("Not found file"))
+				return
+			}
+			b, err := ioutil.ReadAll(file)
+			if err != nil {
+				_, _ = w.Write([]byte("Not found file"))
+				return
+			}
+			_, _ = w.Write(b)
+			return
+		}
+		var files []FileInfo
+		err := mongoUsersCollection.Find(nil).Distinct("files", &files)
+		if err != nil {
+			_, _ = w.Write([]byte("Bad request"))
+			return
+		}
+		for i := 0; i < len(files); i++ {
+			file := files[i]
+			nowTime := time.Now()
+			layout := "2006-01-02T15:04:05"
+			PrintingDate, _ := time.Parse(layout, file.PrintingDate)
+			if (nowTime.Add(time.Minute * 1)).After(PrintingDate) && len(files) > 1 {
+				files = removeFromList(files, i)
+				i--
+			}
+		}
+		jsonByte, err := json.Marshal(files)
+		_, _ = w.Write(jsonByte)
+		return
+	}
+	_, _ = w.Write([]byte("{\"status\":\"Bad request type\"}"))
+	return
 }
 
 func makeCookie(username string) http.Cookie {

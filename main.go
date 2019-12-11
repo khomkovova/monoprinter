@@ -41,6 +41,7 @@ func main() {
 	http.HandleFunc("/api/deletefile", ApiDeleteFile)
 	http.HandleFunc("/api/liqpaydata", ApiLiqpayData)
 	http.HandleFunc("/api/checkorderid", ApiCheckOrderId)
+	http.HandleFunc("/api/busytime", ApiBusyTime)
 	http.HandleFunc("/api/terminal/files", ApiTerminalFiles)
 	l, err := net.Listen("tcp4", ":9999")
 	if err != nil {
