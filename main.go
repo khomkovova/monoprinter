@@ -10,8 +10,9 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
+	"time"
 )
+
 var cache redis.Conn
 var mysqlDb sql.DB
 var mongoUsersCollection mgo.Collection
@@ -19,12 +20,16 @@ var mongoGridFS mgo.GridFS
 var mongoPrinterCollection mgo.Collection
 
 func main() {
-	test()
-	err := initAll()
-	if err != nil{
-		fmt.Println("Not init preference")
-		os.Exit(1)
+	for i := 0; i < 5; i++ {
+		time.Sleep(4000 * time.Millisecond)
+		fmt.Println("sdf")
 	}
+	test()
+	//err := initAll()
+	//if err != nil{
+	//	fmt.Println("Not init preference")
+	//	os.Exit(1)
+	//}
 	fsJs := http.FileServer(http.Dir("public/js"))
 	http.Handle("/js/", http.StripPrefix("/js/", fsJs))
 	fsCss := http.FileServer(http.Dir("public/css"))
@@ -41,7 +46,7 @@ func main() {
 	http.HandleFunc("/api/liqpaydata", ApiLiqpayData)
 	http.HandleFunc("/api/checkorderid", ApiCheckOrderId)
 	http.HandleFunc("/api/terminal/files", ApiTerminalFiles)
-	l, err := net.Listen("tcp4", ":9999")
+	l, err := net.Listen("tcp4", ":9997")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,8 +67,8 @@ func initMongoDb(conf config.MongodbConf) {
 	mongoPrinterCollection = *cP
 }
 
-func initMysql(conf config.MysqlConf)  {
-	var conn, err = sql.Open("mysql", conf.Username + ":" + conf.Password + "@/" + conf.DatabaseName + "?charset=utf8")
+func initMysql(conf config.MysqlConf) {
+	var conn, err = sql.Open("mysql", conf.Username+":"+conf.Password+"@/"+conf.DatabaseName+"?charset=utf8")
 	if err != nil {
 		fmt.Println("Don't connect to mysql")
 		return
@@ -85,7 +90,7 @@ func initAll() error {
 	go CheckOrders()
 	var conf config.Configuration
 	err := conf.ParseConfig()
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	initCache(conf.Databases.Redis)
@@ -95,7 +100,6 @@ func initAll() error {
 
 }
 
-func test()  {
-
+func test() {
 
 }

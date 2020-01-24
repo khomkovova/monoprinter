@@ -42,6 +42,7 @@ func ApiSignin(w http.ResponseWriter, r *http.Request)  {
 
 	var username string
 	err = mysqlDb.QueryRow("SELECT username FROM users WHERE username=? AND password=?", creds.Username, creds.Password).Scan(&username)
+	fmt.Println(creds.Username, creds.Password)
 	if err != nil || username == ""{
 		w.WriteHeader(http.StatusUnauthorized)
 		return
