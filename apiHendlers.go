@@ -7,8 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/satori/go.uuid"
-	"gopkg.in/mgo.v2/bson"
-	"io/ioutil"
+	//"gopkg.in/mgo.v2/bson"
+	//"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -40,18 +41,25 @@ func ApiSignin(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
+		log.Println("Error: ", err)
+		log.Println("ApiSignin() --- Can't parse json")
 		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("Can't parse json"))
 		return
 	}
 
 	var username string
 	err = mysqlDb.QueryRow("SELECT username FROM users WHERE username=? AND password=?", creds.Username, creds.Password).Scan(&username)
 	if err != nil || username == "" {
+		log.Println("Error: ", err)
+		log.Println("ApiSignin() --- Username or password is incorrect")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	cookie := makeCookie(creds.Username)
 	if cookie.Value == "" {
+		log.Println("Error: ", err)
+		log.Println("ApiSignin() --- Can't generate cookies")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -66,7 +74,10 @@ func ApiSignup(w http.ResponseWriter, r *http.Request) {
 	var creds CredentialsRegistration
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
+		log.Println("Error: ", err)
+		log.Println("Can't parse json")
 		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("Can't parse json"))
 		return
 	}
 	var newUsers UserInfo
@@ -75,25 +86,37 @@ func ApiSignup(w http.ResponseWriter, r *http.Request) {
 	newUsers.NumberPhone = creds.NumberPhone
 	err = newUsers.checkUser()
 	if err != nil {
-		fmt.Println(err)
-		_, _ = w.Write([]byte("This users is registered"))
+		log.Println("Error: ", err)
+		log.Println("ApiSignup() --- This username is already used")
+		_, _ = w.Write([]byte("This username is already used"))
 		return
 	}
 	err = newUsers.createNewUser()
 	if err != nil {
-		_, _ = w.Write([]byte("Bad creds"))
+		log.Println("Error: ", err)
+		log.Println("ApiSignup() --- Your credentials are bad, try change password and username.")
+		_, _ = w.Write([]byte("Your credentials are bad, try change password and username"))
 		return
 	}
+	//
+	// FUCK HERE IS SQL INJECTION
+	// FUCK HERE IS SQL INJECTION
+	// FUCK HERE IS SQL INJECTION
+	// FUCK HERE IS SQL INJECTION
+	// FUCK HERE IS SQL INJECTION
+	// FUCK HERE IS SQL INJECTION
+	// FUCK HERE IS SQL INJECTION
 
 	id, err := mysqlDb.Query("INSERT INTO users (username,password)" + "VALUES ('" + creds.Username + "','" + creds.Password + "')")
 	if err != nil {
-		fmt.Println(err)
-		_, _ = w.Write([]byte("This username using or your credentials is not correct"))
+		log.Println("Error: ", err)
+		log.Println("ApiSignup() --- This username exist or your credentials is not correct")
+		_, _ = w.Write([]byte("This username exist or your credentials is not correct"))
 		return
 	}
 	_ = id.Close()
 
-	_, _ = w.Write([]byte("You success registered"))
+	_, _ = w.Write([]byte("You are successfully registered"))
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -103,21 +126,25 @@ func ApiGetShortUserInfo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	username := getUsernameFromCookie(r)
 	if username == "" {
-		_, _ = w.Write([]byte("Bad cookies"))
+		log.Println("ApiGetShortUserInfo() --- Bad cookies. Please sign in again")
+		_, _ = w.Write([]byte("Bad cookies. Please sign in again"))
 		return
 	}
 	var user UserInfo
 	user.Username = username
 	err := user.getInfo()
 	if err != nil {
-		fmt.Println(err)
-		_, _ = w.Write([]byte(err.Error()))
+		log.Println("Error: ", err)
+		log.Println("ApiGetShortUserInfo() --- Can't get information about user")
+		_, _ = w.Write([]byte("Can't get information about user"))
 		return
 	}
 
 	infoJson, err := user.makeStringJsonInfo()
 	if err != nil {
-		_, _ = w.Write([]byte(err.Error()))
+		log.Println("Error: ", err)
+		log.Println("ApiGetShortUserInfo() --- Can't marshall user information into json")
+		_, _ = w.Write([]byte("Can't marshall user information into json"))
 		return
 	}
 	_, _ = w.Write([]byte(infoJson))
@@ -157,7 +184,9 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	username := getUsernameFromCookie(r)
 	if username == "" {
-		_, _ = w.Write([]byte("Bad cookies"))
+		log.Println("ApiUploadFile() --- Bad cookies. Please sign in again")
+		_, _ = w.Write([]byte("Bad cookies. Please sign in again"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -165,18 +194,26 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 	user.Username = username
 	err := user.getInfo()
 	if err != nil {
-		fmt.Println(err)
-		_, _ = w.Write([]byte(err.Error()))
+		log.Println("Error: ", err)
+		log.Println("ApiUploadFile() --- Can't get information about user")
+		_, _ = w.Write([]byte("Can't get information about user"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	err = r.ParseMultipartForm(32 << 20)
 	if err != nil {
+		log.Println("Error: ", err)
+		log.Println("ApiUploadFile() --- Can't parse multipart form")
+		_, _ = w.Write([]byte("Can't parse multipart form"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if len(r.MultipartForm.Value["json"]) == 0 {
+		log.Println("Error: ", err)
+		log.Println("ApiUploadFile() --- Can't parse multipart form")
+		_, _ = w.Write([]byte("Can't parse multipart form"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -185,11 +222,17 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal([]byte(jsonStr), &uploadFile.Info)
 
 	if err != nil {
+		log.Println("Error: ", err)
+		log.Println("ApiUploadFile() --- Can't parse information about file")
+		_, _ = w.Write([]byte("Can't parse information about file"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	file, _, err := r.FormFile("uploadfile")
 	if err != nil {
+		log.Println("Error: ", err)
+		log.Println("ApiUploadFile() --- Can't get file date from request")
+		_, _ = w.Write([]byte("Can't get file date from request"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -198,11 +241,13 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 
 	err = user.addFile(uploadFile)
 	if err != nil {
-		fmt.Println(err)
-		_, _ = w.Write([]byte("not add file"))
+		log.Println("Error: ", err)
+		log.Println("ApiUploadFile() --- ", err)
+		_, _ = w.Write([]byte(err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	_, _ = w.Write([]byte("Success upload"))
+	_, _ = w.Write([]byte("The file is successfully uploaded"))
 
 }
 
@@ -244,7 +289,9 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	username := getUsernameFromCookie(r)
 	if username == "" {
-		_, _ = w.Write([]byte("Bad cookies"))
+		log.Println("ApiLiqpayData() --- Bad cookies. Please sign in again")
+		_, _ = w.Write([]byte("Bad cookies. Please sign in again"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	type Count struct {
@@ -253,7 +300,9 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	count := Count{}
 	err := json.NewDecoder(r.Body).Decode(&count)
 	if err != nil {
-		fmt.Println(err)
+		log.Println("Error: ", err)
+		log.Println("ApiLiqpayData() --- Can't parse json with count pages")
+		_, _ = w.Write([]byte("Can't parse json with count pages"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -262,7 +311,9 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	newOrder.SetCountMoney(count.Count)
 	err = newOrder.MakeId()
 	if err != nil {
-		fmt.Println(err)
+		log.Println("Error: ", err)
+		log.Println("ApiLiqpayData() --- Can't create new order")
+		_, _ = w.Write([]byte("Can't create new order"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -271,19 +322,25 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	user.Username = username
 	err = user.getInfo()
 	if err != nil {
-		fmt.Println(err)
-		_, _ = w.Write([]byte(err.Error()))
+		log.Println("Error: ", err)
+		log.Println("ApiLiqpayData() --- Can't get order id")
+		_, _ = w.Write([]byte("Can't get order id"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	err = user.addOrder(orderId, "wait_accept")
 	if err != nil {
-		fmt.Println(err)
+		log.Println("Error: ", err)
+		log.Println("ApiLiqpayData() --- Can't add new order")
+		_, _ = w.Write([]byte("Can't add new order"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	err = newOrder.MakeRequestData()
 	if err != nil {
-		fmt.Println(err)
+		log.Println("Error: ", err)
+		log.Println("ApiLiqpayData() --- Can't make data request")
+		_, _ = w.Write([]byte("Can't make data request"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -298,6 +355,9 @@ func ApiCheckOrderId(w http.ResponseWriter, r *http.Request) {
 	data := r.PostFormValue("data")
 	sDec, err := b64.StdEncoding.DecodeString(data)
 	if err != nil {
+		log.Println("Error: ", err)
+		log.Println("ApiCheckOrderId() --- Can't decode data")
+		_, _ = w.Write([]byte("Can't decode data"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -307,16 +367,25 @@ func ApiCheckOrderId(w http.ResponseWriter, r *http.Request) {
 	var dataJson DataJson
 	err = json.Unmarshal([]byte(sDec), &dataJson)
 	if err != nil {
+		log.Println("Error: ", err)
+		log.Println("ApiCheckOrderId() --- Can't unmarshal json")
+		_, _ = w.Write([]byte("Can't unmarshal json"))
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	exitingOrder := liqpay.SetupExitingOrder()
 	exitingOrder.SetOrderId(dataJson.OrderId)
 	err, orderInfo := exitingOrder.GetOrderIdInfo()
 	if orderInfo.Status == "Error" {
+		log.Println("Error: ", err)
+		log.Println("ApiCheckOrderId() --- Order status is error")
+		_, _ = w.Write([]byte("Order status is error"))
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	err, user, count := exitingOrder.GetUsernameAndCountMoney()
 	if err != nil {
+		log.Println("Error: ", err)
+		log.Println("ApiCheckOrderId() --- Can't get username and count from order id")
+		_, _ = w.Write([]byte("Can't get username and count from order id"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -324,8 +393,10 @@ func ApiCheckOrderId(w http.ResponseWriter, r *http.Request) {
 	if orderInfo.Status == "wait_accept" {
 		var u UserInfo
 		err, status := u.getOrderStatus(orderInfo.OrderId)
-		fmt.Println(status)
 		if err != nil {
+			log.Println("Error: ", err)
+			log.Println("ApiCheckOrderId() --- Can't get order status")
+			_, _ = w.Write([]byte("Can't get order status"))
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -333,7 +404,9 @@ func ApiCheckOrderId(w http.ResponseWriter, r *http.Request) {
 			u.Username = user
 			err = u.addPage(count)
 			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
+				log.Println("Error: ", err)
+				log.Println("ApiCheckOrderId() --- Can't add pages to user")
+				_, _ = w.Write([]byte("Can't add pages to user"))
 				return
 			}
 			_ = u.changeOrderStatus(orderInfo.OrderId, "success")
@@ -348,31 +421,36 @@ func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
 	username := getUsernameFromCookie(r)
 	if username == "" {
-		_, _ = w.Write([]byte("Bad cookies"))
+		log.Println("ApiLiqpayData() --- Bad cookies. Please sign in again")
+		_, _ = w.Write([]byte("Bad cookies. Please sign in again"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if r.Method == "GET" {
-		keys, _ := r.URL.Query()["uniqueid"]
-		if len(keys) > 0 {
-			uniqueid := keys[0]
-			file, err := mongoGridFS.OpenId(bson.ObjectIdHex(uniqueid))
-			if err != nil {
-				_, _ = w.Write([]byte("Not found file"))
-				return
-			}
-			b, err := ioutil.ReadAll(file)
-			if err != nil {
-				_, _ = w.Write([]byte("Not found file"))
-				return
-			}
-			_, _ = w.Write(b)
-			return
-		}
+		//keys, _ := r.URL.Query()["uniqueid"]
+		//if len(keys) > 0 {
+		//	uniqueid := keys[0]
+		//	file, err := mongoGridFS.OpenId(bson.ObjectIdHex(uniqueid))
+		//	if err != nil {
+		//		_, _ = w.Write([]byte("Not found file"))
+		//		return
+		//	}
+		//	b, err := ioutil.ReadAll(file)
+		//	if err != nil {
+		//		_, _ = w.Write([]byte("Not found file"))
+		//		return
+		//	}
+		//	_, _ = w.Write(b)
+		//	return
+		//}
 		var files []FileInfo
 		err := mongoUsersCollection.Find(nil).Distinct("files", &files)
 		if err != nil {
-			_, _ = w.Write([]byte("Bad request"))
+			log.Println("Error: ", err)
+			log.Println("ApiBusyTime() --- Can't search in mongodb")
+			_, _ = w.Write([]byte("Can't search in mongodb"))
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		for i := 0; i < len(files); i++ {
