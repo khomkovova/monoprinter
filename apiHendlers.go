@@ -87,6 +87,7 @@ func ApiSignup(w http.ResponseWriter, r *http.Request) {
 
 	id, err := mysqlDb.Query("INSERT INTO users (username,password)" + "VALUES ('" + creds.Username + "','" + creds.Password + "')")
 	if err != nil {
+		fmt.Println(err)
 		_, _ = w.Write([]byte("This username using or your credentials is not correct"))
 		return
 	}
@@ -252,6 +253,7 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	count := Count{}
 	err := json.NewDecoder(r.Body).Decode(&count)
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -260,6 +262,7 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	newOrder.SetCountMoney(count.Count)
 	err = newOrder.MakeId()
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -274,11 +277,13 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	}
 	err = user.addOrder(orderId, "wait_accept")
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	err = newOrder.MakeRequestData()
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

@@ -12,8 +12,10 @@ import (
 	"fmt"
 	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
+	"MonoPrinter/config"
 )
 
 //type FileInfo struct {
@@ -48,17 +50,25 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 		keys, _ := r.URL.Query()["uniqueid"]
 		if len(keys) > 0 {
 			uniqueid := keys[0]
-			file, err := mongoGridFS.OpenId(bson.ObjectIdHex(uniqueid))
+			//file, err := mongoGridFS.OpenId(bson.ObjectIdHex(uniqueid))
+			//if err != nil {
+			//	_, _ = w.Write([]byte("Not found file"))
+			//	return
+			//}
+			//b, err := ioutil.ReadAll(file)
+			//if err != nil {
+			//	_, _ = w.Write([]byte("Not found file"))
+			//	return
+			//}
+			var conf config.Configuration
+			err := conf.ParseConfig()
 			if err != nil {
-				_, _ = w.Write([]byte("Not found file"))
+				log.Fatalf("Failed to create client: %v", err)
 				return
 			}
-			b, err := ioutil.ReadAll(file)
-			if err != nil {
-				_, _ = w.Write([]byte("Not found file"))
-				return
-			}
-			_, _ = w.Write(b)
+			bucketName := conf.GCP.BucketUsersFiles
+
+			_, _ = w.Write([]byte("https://storage.googleapis.com/" + bucketName + "/" + uniqueid))
 			return
 		}
 		var files []FileInfo

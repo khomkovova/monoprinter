@@ -7,7 +7,12 @@ import (
 
 type Configuration struct {
 	Databases DatabasesConf `json:"Databases"`
+	GCP GCPConf `json:"GCP"`
 
+}
+
+type GCPConf struct {
+	BucketUsersFiles string 	`json:"BucketUsersFiles"`
 }
 
 type DatabasesConf struct {

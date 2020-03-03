@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"gopkg.in/mgo.v2/bson"
-	"io"
+	"strconv"
+
+	//"io"
 )
 
 type UserInfo struct {
@@ -101,13 +103,13 @@ func (userInfo *UserInfo) addFile(uploadFile UploadFile) error {
 		return err
 	}
 
-	mongoFile, err := mongoGridFS.Create(uploadFile.Info.Filename)
-	if err != nil {
-		return errors.New("Not create file")
-	}
-	ObjectId := fmt.Sprintf("%s", mongoFile.Id())
-	id := ObjectId[13 : len(ObjectId)-2]
-	uploadFile.Info.UniqueId = id
+	//mongoFile, err := mongoGridFS.Create(uploadFile.Info.Filename)
+	//if err != nil {
+	//	return errors.New("Not create file")
+	//}
+	//ObjectId := fmt.Sprintf("%s", mongoFile.Id())
+	//id := ObjectId[13 : len(ObjectId)-2]
+	uploadFile.Info.UniqueId =  uploadFile.Info.UploadDate + "___" + userInfo.Username + "___" + strconv.Itoa(uploadFile.Info.IdPrinter) + "___" + uploadFile.Info.Filename
 	err = uploadFile.Info.checkInfo()
 	if err != nil {
 		fmt.Println(err)
@@ -117,12 +119,12 @@ func (userInfo *UserInfo) addFile(uploadFile UploadFile) error {
 		return errors.New("Don't have pages")
 	}
 	userInfo.NumberPages -= uploadFile.Info.NumberPage
-	_, err = io.Copy(mongoFile, uploadFile.FilePdf)
-
+	//_, err = io.Copy(mongoFile, uploadFile.FilePdf)
+	err = gcp_upload_file(uploadFile)
 	if err != nil {
 		fmt.Println("Not upload file")
 	}
-	_ = mongoFile.Close()
+	//_ = mongoFile.Close()
 	_ = file.Close()
 	printer.PrinterInfo.PrinterID = uploadFile.Info.IdPrinter
 	err = printer.addPrintingTime(uploadFile.Info.PrintingDate, uploadFile.Info.NumberPage)

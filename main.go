@@ -2,15 +2,18 @@ package main
 
 import (
 	"MonoPrinter/config"
+	//"context"
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gomodule/redigo/redis"
 	"gopkg.in/mgo.v2"
+	//"io"
 	"log"
 	"net"
 	"net/http"
 	"os"
+
 )
 
 var cache redis.Conn
@@ -97,6 +100,8 @@ func initAll() error {
 
 }
 
-func test() {
+
+func test()  {
+
 
 }
