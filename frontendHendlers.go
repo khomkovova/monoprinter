@@ -4,15 +4,17 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 func Main(w http.ResponseWriter, r *http.Request){
-	username := getUsernameFromCookie(r)
-	if username == ""{
+	err, email := getEmailFromCookie(r)
+	if err != nil{
+		log.Println("Error: ", err)
 		fmt.Println("Bad cookie")
 		//Load index.html
 	}
-	fmt.Println("Yor username =", username)
+	fmt.Println("Yor username =", email)
 	//load user info page
 }
 

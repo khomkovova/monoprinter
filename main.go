@@ -2,25 +2,27 @@ package main
 
 import (
 	"MonoPrinter/config"
-	//"context"
-	"database/sql"
+	"context"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/gomodule/redigo/redis"
-	"gopkg.in/mgo.v2"
-	//"io"
+	"time"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	//"gopkg.in/mgo.v2"
 	"log"
 	"net"
 	"net/http"
 	"os"
-
 )
 
-var cache redis.Conn
-var mysqlDb sql.DB
-var mongoUsersCollection mgo.Collection
-var mongoGridFS mgo.GridFS
-var mongoPrinterCollection mgo.Collection
+
+
+
+
+
+var mongoUsersCollection mongo.Collection
+var mongoPrinterCollection mongo.Collection
+var mongoCTX context.Context
 
 func main() {
 	test()
@@ -33,17 +35,13 @@ func main() {
 	http.Handle("/js/", http.StripPrefix("/js/", fsJs))
 	fsCss := http.FileServer(http.Dir("public/css"))
 	http.Handle("/css/", http.StripPrefix("/css/", fsCss))
-	http.HandleFunc("/", Main)
-	http.HandleFunc("/signin", Signin)
-	http.HandleFunc("/signup", Signup)
-	http.HandleFunc("/api/signin", ApiSignin)
-	http.HandleFunc("/api/signup", ApiSignup)
+	http.HandleFunc("/api/signin/google", ApiGoogleSignin)
 	http.HandleFunc("/api/getshortuserinfo", ApiGetShortUserInfo)
 	//http.HandleFunc("/api/updateuserinfo", ApiUpdateUserInfo)
 	http.HandleFunc("/api/uploadfile", ApiUploadFile)
-	http.HandleFunc("/api/deletefile", ApiDeleteFile)
+	//http.HandleFunc("/api/deletefile", ApiDeleteFile)
 	http.HandleFunc("/api/liqpaydata", ApiLiqpayData)
-	http.HandleFunc("/api/checkorderid", ApiCheckOrderId)
+	//http.HandleFunc("/api/checkorderid", ApiCheckOrderId)
 	http.HandleFunc("/api/busytime", ApiBusyTime)
 	http.HandleFunc("/api/terminal/files", ApiTerminalFiles)
 	l, err := net.Listen("tcp4", ":9999")
@@ -54,35 +52,24 @@ func main() {
 }
 
 func initMongoDb(conf config.MongodbConf) {
-	session, err := mgo.Dial(conf.Host)
-	if err != nil {
-		fmt.Println("Don't connect to mongodb")
-	}
-	session.SetMode(mgo.Monotonic, true)
-	c := session.DB(conf.DatabaseName).C("test2")
-	cP := session.DB(conf.DatabaseName).C("printers")
-	grfs := session.DB(conf.DatabaseName).GridFS("fs")
-	mongoGridFS = *grfs
-	mongoUsersCollection = *c
-	mongoPrinterCollection = *cP
-}
+	//session, err := mgo.Dial(conf.Host)
+	//if err != nil {
+	//	fmt.Println("Don't connect to mongodb")
+	//}
+	//session.SetMode(mgo.Monotonic, true)
+	//c := session.DB(conf.DatabaseName).C("test2")
+	//cP := session.DB(conf.DatabaseName).C("printers")
+	//mongoUsersCollection = *c
+	//mongoPrinterCollection = *cP
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb+srv://" + conf.Username + ":" + conf.Password + "@" + conf.Host + "/" + conf.DatabaseName + "?retryWrites=true&w=majority"))
+	if err != nil { log.Fatal(err) }
+	collectionUsers := client.Database("printbox").Collection("users")
+	collectionPrinters := client.Database("printbox").Collection("users")
+	mongoUsersCollection = *collectionUsers
+	mongoPrinterCollection = *collectionPrinters
+	mongoCTX = ctx
 
-func initMysql(conf config.MysqlConf) {
-	var conn, err = sql.Open("mysql", conf.Username+":"+conf.Password+"@/"+conf.DatabaseName+"?charset=utf8")
-	if err != nil {
-		fmt.Println("Don't connect to mysql")
-		return
-	}
-	mysqlDb = *conn
-}
-
-func initCache(conf config.RedisConf) {
-	conn, err := redis.DialURL("redis://" + conf.Host)
-	if err != nil {
-		fmt.Println("Don't connect to redis")
-		return
-	}
-	cache = conn
 }
 
 func initAll() error {
@@ -93,8 +80,6 @@ func initAll() error {
 	if err != nil {
 		return err
 	}
-	initCache(conf.Databases.Redis)
-	initMysql(conf.Databases.Mysql)
 	initMongoDb(conf.Databases.MongoDb)
 	return nil
 
@@ -102,6 +87,21 @@ func initAll() error {
 
 
 func test()  {
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
+		"mongodb+srv://admin2:admin@printbox-bsv50.gcp.mongodb.net/printbox?retryWrites=true&w=majority",
+	))
 
+	if err != nil { log.Fatal(err) }
+	collection := client.Database("printbox").Collection("printbox")
+	type orders struct {
+		Id     string `json:"id"`
+		Status string `json:"status"`
+	}
+	var o orders
+	o.Id = "test"
+	o.Status = "test_status"
 
+	res, err := collection.InsertOne(ctx,o)
+	fmt.Println(res)
 }

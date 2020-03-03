@@ -2,6 +2,7 @@ package main
 
 import (
 	"MonoPrinter/rsaparser"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -18,18 +19,6 @@ import (
 	"MonoPrinter/config"
 )
 
-//type FileInfo struct {
-//	UniqueId string
-//	Filename string
-//	PrintingDate string
-//
-//	UploadDate string
-//	NumberPage int
-//	Size string
-//
-//	IdPrinter int
-//	Status string
-//}
 const STATUS_WAITING_DOWNLOAD = "STATUS_WAITING_DOWNLOAD"
 const STATUS_WAITING_DELETE_FROM_TERMINAL = "STATUS_WAITING_DELETE_FROM_TERMINAL"
 
@@ -50,16 +39,6 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 		keys, _ := r.URL.Query()["uniqueid"]
 		if len(keys) > 0 {
 			uniqueid := keys[0]
-			//file, err := mongoGridFS.OpenId(bson.ObjectIdHex(uniqueid))
-			//if err != nil {
-			//	_, _ = w.Write([]byte("Not found file"))
-			//	return
-			//}
-			//b, err := ioutil.ReadAll(file)
-			//if err != nil {
-			//	_, _ = w.Write([]byte("Not found file"))
-			//	return
-			//}
 			var conf config.Configuration
 			err := conf.ParseConfig()
 			if err != nil {
@@ -71,12 +50,46 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			_, _ = w.Write([]byte("https://storage.googleapis.com/" + bucketName + "/" + uniqueid))
 			return
 		}
+
+		//fuck
+		//fuck
+		//fuck
 		var files []FileInfo
-		err := mongoUsersCollection.Find(nil).Distinct("files", &files)
-		if err != nil {
-			_, _ = w.Write([]byte("Bad request"))
-			return
-		}
+		filter := bson.M{}
+		result, _ := mongoUsersCollection.Distinct(context.TODO(), "files", filter)
+		fmt.Println(result)
+
+		//fuck
+		//fuck
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		//var files []FileInfo
+		//err := mongoUsersCollection.FindOne(nil).Distinct("files", &files)
+		//if err != nil {
+		//	_, _ = w.Write([]byte("Bad request"))
+		//	return
+		//}
 		for i := 0; i < len(files); i++ {
 			file := files[i]
 			if file.IdPrinter != terminalId || (file.Status != STATUS_WAITING_DOWNLOAD && file.Status != STATUS_WAITING_DELETE_FROM_TERMINAL) {
@@ -92,7 +105,7 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 				i--
 			}
 		}
-		jsonByte, err := json.Marshal(files)
+		jsonByte, _ := json.Marshal(files)
 		_, _ = w.Write(jsonByte)
 		return
 	}
@@ -110,7 +123,7 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("Bad request"))
 				return
 			}
-			err = mongoUsersCollection.Update(bson.M{"files.uniqueid": uniqueid, "files.idprinter": terminalId}, bson.M{"$set": bson.M{"files.$.status": st.Status}})
+			_, err = mongoUsersCollection.UpdateOne(context.TODO(), bson.M{"files.uniqueid": uniqueid, "files.idprinter": terminalId}, bson.M{"$set": bson.M{"files.$.status": st.Status}})
 			if err != nil {
 				_, _ = w.Write([]byte("Not found file"))
 				return

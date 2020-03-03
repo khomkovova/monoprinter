@@ -2,39 +2,84 @@ package main
 
 import (
 	"MonoPrinter/liqpay"
+	"go.mongodb.org/mongo-driver/bson"
+	"log"
 	"time"
+	"context"
 )
 
 func CheckOrders()  {
-	//fmt.Println("CheckOrders()")
-	time.Sleep(time.Minute * 1)
+	time.Sleep(time.Second * 1)
 
-	type orders struct {
+	type Order struct {
 		Id string `json:"id"`
 		Status string `json:"status"`
 	}
-	var order []orders
-	err := mongoUsersCollection.Find(nil).Distinct("orders", &order)
+	var order Order
+	var orders []Order
+	result, err := mongoUsersCollection.Distinct(context.TODO(), "orders", bson.D{{}})
 	if err != nil {
+		log.Println("Error: ", err)
+		log.Println("CheckOrders() --- Can't run distinct command")
+		CheckOrders()
+	}
+
+	for _, i := range result {
+		resp, err := bson.Marshal(i)
+		if err != nil {
+			log.Println("Error: ", err)
+			log.Println("CheckOrders() --- Can't marshal interface")
+			continue
+		}
+
+		err = bson.Unmarshal(resp, &order)
+		if err != nil {
+			log.Println("Error: ", err)
+			log.Println("CheckOrders() --- Can't unmarshal data")
+			continue
+		}
+		orders = append(orders, order)
+	}
+	if len(orders) == 0 {
+		log.Println("CheckOrders() --- Orders len is 0")
 		CheckOrders()
 	}
 	l := liqpay.SetupExitingOrder()
-	for _, o := range order {
-		if o.Status != "wait_accept"{
+	for _, o := range orders {
+		if o.Status == "success"{
 			continue
 		}
 		l.SetOrderId(o.Id)
-		err, user, count := l.GetUsernameAndCountMoney()
+		err, orderInfo := l.GetOrderIdInfo()
 		if err != nil {
+			log.Println("Error: ", err)
+			log.Println("CheckOrders() --- Can't get order info")
+			continue
+		}
+		if orderInfo.Status != "success"{
+			continue
+		}
+		err, email, count := l.GetEmailAndCountMoney()
+		if err != nil {
+			log.Println("Error: ", err)
+			log.Println("CheckOrders() --- Can't get email and count from order id")
 			continue
 		}
 		var u UserInfo
-		u.Username = user
+		u.Email = email
 		err = u.addPage(count)
 		if err != nil {
+			log.Println("Error: ", err)
+			log.Println("CheckOrders() --- Can't add pages to user")
 			continue
 		}
-		_ = u.changeOrderStatus(o.Id, "success")
+		err = u.changeOrderStatus(o.Id, "success")
+		if err != nil {
+			log.Println("Error: ", err)
+			log.Println("CheckOrders() --- Can't change order status")
+			//CheckOrders()
+			continue
+		}
 
 	}
 	CheckOrders()

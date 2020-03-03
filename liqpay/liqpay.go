@@ -55,7 +55,7 @@ func SetupExitingOrder() ExitingOrder {
 }
 
 type NewOrder interface {
-	SetUsername(username string)
+	SetEmail(email string)
 	SetCountMoney(countMoney int)
 	MakeId() error
 	GetOrderId() string
@@ -66,25 +66,25 @@ type NewOrder interface {
 type ExitingOrder interface {
 	SetOrderId(orderId string)
 	GetOrderIdInfo() (error, OrderInfo)
-	GetUsernameAndCountMoney() (error error, username string, countMoney int)
+	GetEmailAndCountMoney() (error error, email string, countMoney int)
 }
 
 type OrderInfo struct {
 	Status string `json:"status"`
 	Result string `json:"result"`
 	OrderId string `json:"order_id"`
-	Amount int `json:"amount"`
+	Amount float64 `json:"amount"`
 }
 
 type Order struct {
 	 id string
-	 user string
+	 email string
 	 countMoney int
 	 requestData string
 }
 
-func (order *Order) SetUsername(username string)  {
-	order.user = username
+func (order *Order) SetEmail(email string)  {
+	order.email = email
 }
 
 func (order *Order) SetCountMoney(countMoney int)  {
@@ -95,8 +95,8 @@ func (order *Order) SetOrderId(orderId string)  {
 	order.id = orderId
 }
 
-func (order *Order) GetUsername() string{
-	return order.user
+func (order *Order) GetEmail() string{
+	return order.email
 }
 
 func (order *Order) GetCountMoney() int{
@@ -114,19 +114,20 @@ func (order *Order) GetRequestData() string {
 // First need runt SetUsername() and SetCountMoney()
 func (order *Order)MakeId() error {
 
-	if order.user == "" {
-		return errors.New("Username is empty")
+	if order.email == "" {
+		return errors.New("Email is empty")
 	}
 	if order.countMoney == 0 {
 		return errors.New("CountMoney is empty")
 	}
 	t := time.Now()
-	plainId := `{"user":"` + order.user + `", "count":` + strconv.Itoa(order.countMoney) + `, "time":` + strconv.Itoa(int(t.UnixNano()/1000)) + `}`
+	plainId := `{"email":"` + order.email + `", "count":` + strconv.Itoa(order.countMoney) + `, "time":` + strconv.Itoa(int(t.UnixNano()/1000)) + `}`
 	err, cipherId := order.ecryptId(plainId)
 	if err != nil{
 		return err
 	}
 	order.id = cipherId
+	fmt.Println(order.id)
 	return nil
 }
 
@@ -199,13 +200,13 @@ func (order *Order)MakeRequestData() (error) {
 }
 
 // First need SetOrderId()
-func (order *Order)GetUsernameAndCountMoney() (error error, username string, countMoney int){
+func (order *Order)GetEmailAndCountMoney() (error error, email string, countMoney int){
 	err, plainOrderId := order.decryptId(order.id)
 	if err != nil{
 		return err, "", 0
 	}
 	type OrderIdJson struct {
-		Username string `json:"user"`
+		Email string `json:"email"`
 		Count int `json:"count"`
 	}
 	var orderIdJson OrderIdJson
@@ -213,7 +214,7 @@ func (order *Order)GetUsernameAndCountMoney() (error error, username string, cou
 	if err != nil{
 		return err, "", 0
 	}
-	return nil, orderIdJson.Username, orderIdJson.Count
+	return nil, orderIdJson.Email, orderIdJson.Count
 }
 
 type formData struct {
@@ -257,8 +258,9 @@ func (order * Order)GetOrderIdInfo() (error, OrderInfo){
 	if err != nil {
 		return err, oI
 	}
-	byte, _ :=ioutil.ReadAll(response.Body)
 
+
+	byte, _ :=ioutil.ReadAll(response.Body)
 	err = json.Unmarshal(byte, &oI)
 	if err != nil {
 		return err, oI

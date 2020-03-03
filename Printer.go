@@ -1,9 +1,10 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 	"time"
 )
 
@@ -52,9 +53,9 @@ func (printer *Printer) addPrintingTime(printingTimeStr string, delay int) error
 }
 
 func (printer *Printer) getNewInfo() error {
-	err := mongoPrinterCollection.Find(bson.M{"PrinterID": printer.PrinterInfo.PrinterID}).One(&printer.PrinterInfo)
+	err := mongoPrinterCollection.FindOne(context.TODO(), bson.M{"PrinterID": printer.PrinterInfo.PrinterID}).Decode(&printer.PrinterInfo)
 	if err != nil{
-		err = mongoPrinterCollection.Insert(printer.PrinterInfo)
+		_, err = mongoPrinterCollection.InsertOne(context.TODO(), printer.PrinterInfo)
 		if err != nil{
 			err = errors.New("PrinterID not fount and not create")
 			return err
@@ -65,7 +66,7 @@ func (printer *Printer) getNewInfo() error {
 
 func (printer *Printer) setNewInfo() error {
 
-	_, err := mongoPrinterCollection.UpdateAll(bson.M{"PrinterID": printer.PrinterInfo.PrinterID}, bson.M{"$set": printer.PrinterInfo})
+	_, err := mongoPrinterCollection.UpdateOne(context.TODO(), bson.M{"PrinterID": printer.PrinterInfo.PrinterID}, bson.M{"$set": printer.PrinterInfo})
 	if err != nil{
 		err = errors.New("Printer info not updated")
 		return err
