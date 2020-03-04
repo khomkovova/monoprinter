@@ -20,6 +20,7 @@ ls backup  || { echo -e "\e[31mFirst download backup files. Run backup_download.
 #chmod 777 /go/bin/dlv
 #go get -d -v ./...
 #go build
-#echo -e "\e[32mOk app is build!\e[39m!"
+echo -e "\e[32mOk app is build!\e[39m!"
 ./MonoPrinter &
+echo "Start "
 
