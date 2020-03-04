@@ -49,7 +49,7 @@ func main() {
 		port = "80"
 	}
 
-	l, err := net.Listen("tcp4", port)
+	l, err := net.Listen("tcp4", ":" + port)
 	if err != nil {
 		log.Fatal(err)
 	}
