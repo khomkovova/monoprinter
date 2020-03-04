@@ -6,17 +6,16 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
-	_ "database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 	"MonoPrinter/config"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 const STATUS_WAITING_DOWNLOAD = "STATUS_WAITING_DOWNLOAD"
@@ -33,7 +32,7 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("Bad cookie"))
 		return
 	}
-	fmt.Println("terminalId: ", terminalId)
+	//fmt.Println("terminalId: ", terminalId)
 
 	if r.Method == "GET" {
 		keys, _ := r.URL.Query()["uniqueid"]
@@ -51,45 +50,32 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		//fuck
-		//fuck
-		//fuck
 		var files []FileInfo
-		filter := bson.M{}
-		result, _ := mongoUsersCollection.Distinct(context.TODO(), "files", filter)
-		fmt.Println(result)
+		var file FileInfo
+		result, err := mongoUsersCollection.Distinct(context.TODO(), "files", bson.D{{}})
+		if err != nil {
+			log.Println("Error: ", err)
+			log.Println("ApiTerminalFiles() --- Can't run distinct command")
+			_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't run distinct command\"}"))
+			return
+		}
+		for _, i := range result {
+			resp, err := bson.Marshal(i)
+			if err != nil {
+				log.Println("Error: ", err)
+				log.Println("ApiTerminalFiles() --- Can't marshal interface")
+				continue
+			}
 
-		//fuck
-		//fuck
+			err = bson.Unmarshal(resp, &file)
+			if err != nil {
+				log.Println("Error: ", err)
+				log.Println("ApiTerminalFiles() --- Can't unmarshal data")
+				continue
+			}
+			files = append(files, file)
+		}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		//var files []FileInfo
-		//err := mongoUsersCollection.FindOne(nil).Distinct("files", &files)
-		//if err != nil {
-		//	_, _ = w.Write([]byte("Bad request"))
-		//	return
-		//}
 		for i := 0; i < len(files); i++ {
 			file := files[i]
 			if file.IdPrinter != terminalId || (file.Status != STATUS_WAITING_DOWNLOAD && file.Status != STATUS_WAITING_DELETE_FROM_TERMINAL) {
@@ -143,7 +129,6 @@ func decryptTerminalCookie(cookie string) (err error, terminalId int) {
 		return err, 0
 	}
 	plainText, err := rsa.DecryptOAEP(hash, rand.Reader, privateKey, sDec, label)
-	fmt.Println("Terminal token = ", plainText)
 	if err != nil {
 		return errors.New("Didn't decrypt cookie"), 0
 	}

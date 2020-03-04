@@ -65,7 +65,7 @@ func initMongoDb(conf config.MongodbConf) {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb+srv://" + conf.Username + ":" + conf.Password + "@" + conf.Host + "/" + conf.DatabaseName + "?retryWrites=true&w=majority"))
 	if err != nil { log.Fatal(err) }
 	collectionUsers := client.Database("printbox").Collection("users")
-	collectionPrinters := client.Database("printbox").Collection("users")
+	collectionPrinters := client.Database("printbox").Collection("printers")
 	mongoUsersCollection = *collectionUsers
 	mongoPrinterCollection = *collectionPrinters
 	mongoCTX = ctx
@@ -87,21 +87,5 @@ func initAll() error {
 
 
 func test()  {
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-		"mongodb+srv://admin2:admin@printbox-bsv50.gcp.mongodb.net/printbox?retryWrites=true&w=majority",
-	))
 
-	if err != nil { log.Fatal(err) }
-	collection := client.Database("printbox").Collection("printbox")
-	type orders struct {
-		Id     string `json:"id"`
-		Status string `json:"status"`
-	}
-	var o orders
-	o.Id = "test"
-	o.Status = "test_status"
-
-	res, err := collection.InsertOne(ctx,o)
-	fmt.Println(res)
 }
