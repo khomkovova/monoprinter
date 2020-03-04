@@ -34,9 +34,7 @@ type Tokeninfo struct {
 
 
 func ApiGoogleSignin(w http.ResponseWriter, r *http.Request)  {
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	//w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
-    w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8888")
+	w = AddResponseWriterHeaders(w)
 	var googleOAuth GoogleOAuth
 	err := json.NewDecoder(r.Body).Decode(&googleOAuth)
 	if err != nil {
@@ -97,9 +95,7 @@ func ApiGoogleSignin(w http.ResponseWriter, r *http.Request)  {
 }
 
 func ApiGetShortUserInfo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	//w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
-    w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8888")
+	w = AddResponseWriterHeaders(w)
 	log.Println("debug() --- ", r.Body)
 	err, email := getEmailFromCookie(r)
 	if err != nil{
@@ -130,9 +126,7 @@ func ApiGetShortUserInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
-    w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8888")
+	w = AddResponseWriterHeaders(w)
 	err, email := getEmailFromCookie(r)
 	if err != nil{
 		log.Println("Error: ", err)
@@ -198,9 +192,7 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 
 
 func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	//w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
-    w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8888")
+	w = AddResponseWriterHeaders(w)
 	err, email := getEmailFromCookie(r)
 	if err != nil{
 		log.Println("Error: ", err)
@@ -262,9 +254,7 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 
 
 func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
-    w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8888")
+	w = AddResponseWriterHeaders(w)
 	err, _ := getEmailFromCookie(r)
 	if err != nil{
 		log.Println("Error: ", err)
@@ -444,3 +434,14 @@ func getEmailFromCookie(r *http.Request) (error, string) {
 //	}
 //	_, _ = w.Write([]byte("{\"status\" : \"\", \"status_description\" : \"Success deleted\"}"))
 //}
+
+func AddResponseWriterHeaders(w  http.ResponseWriter)  http.ResponseWriter {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8888")
+	w.Header().Set("Access-Control-Allow-Origin", "http://drukbox.club")
+	w.Header().Set("Access-Control-Allow-Origin", "https://drukbox.club")
+	w.Header().Set("Access-Control-Allow-Origin", "https://drukbox.remidolov.date")
+
+	return w
+}
