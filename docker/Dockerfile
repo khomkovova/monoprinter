@@ -22,7 +22,7 @@ ENV GOPATH /go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
-CMD cd /go/src/ && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git && ls && cd MonoPrinter/script && chmod 744 ./setup.sh  && ./setup.sh --git_username=$git_username --git_password=$git_password  && /bin/bash
+CMD cd /go/src/ && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git  && cd MonoPrinter/scripts && chmod 744 ./setup.sh  && ./setup.sh --git_username=$git_username --git_password=$git_password  && /bin/bash
 
 # CMD  ["/bin/bash", "-c", "cd /go/src/ && git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinter.git && cd MonoPrinter && chmod 744 ./install_all.sh  && ./install_all.sh --git_username=$git_username --git_password=$git_password --aws_access_key_id=$aws_access_key_id --aws_secret_access_key=$aws_secret_access_key --aws_region=$aws_region && /bin/bash"]
 # ENTRYPOINT [""]

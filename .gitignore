@@ -4,6 +4,6 @@ config.json
 .idea
 MonoPrinterConfig
 liqpay/config.json
-MonoPrinter
+#MonoPrinter
 dump.rdb
 temp*
