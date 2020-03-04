@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "our-service-269213",
+  "private_key_id": "f3a113d876aa52febd7b9e62d7d72520d2e1f8ac",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCkxivV4pwuGkCV\nvR/6fjUcGgh9cqiiJd9Xq8HADMzcRGUFwTwaWHqO+wkBfZ2u+QEuCkhLh6Lz5Y2W\nSakE+FdvcOYq1ZHSSVABGr+aBZUUOh7sSf5z3vyjBK6BIPjzlr4dH/rQfMr9b1eI\n/6gNRB/vEcYBN2cvOWSjfyKH4c9zB2i3PkVETtqfPUvWGOE+D8tQjTUHdUmr6NaI\nYUpguFumTsaI1BN7j0+1pF6mFLd+d0JmdY0S8hXdM1PJkIiRAGkTrFHQQfxkmLyb\nBzI9Zz/QWOuoGnQufvYaAiieFjQOuab1S6FApOkc7Lb+S5X7gAhAasJl3aqdCYQ9\n0b3Mp9O3AgMBAAECggEAOLJhyf5oHCr3Vy7U7pX3w1wn2LaX1PdwItQcXm9pHE/C\nbRkBC9WvEjzJ7APjup2+rK9oEekxhnfR4MkmyemD+HoiENIdE30bdM3V6PMLyYJ4\nOnj5f7hWOOe2/gKw9uxDLXVgEdYm6M6jkaXalvn+fP4iIjAEpsi6WtG3uYbXIW55\nQ1/5BsrZDchFO0L34GM38kMb8DK2/Oq2+VR8ufKpPuS7Xp79Sm/mQ/LcMk78FL3H\nPeUK4TA5JgPP4I2guLrSUzq77ugTHJWw/+O4sqXT61p24ft3WTfRV2J4itUE+lsf\nNurLXynlHNNhbdfWuIL0EBAO5XvhV5jtgB08lAl3rQKBgQDVrHepWSDh5p2K/wBI\nmmsJ7er6106vyyCfGOoGBupUWuJ/RxttN6XewIYbywBCdIkYsc5S5NZIZlOqmJ1Z\nF61CUk0cTNUmuSIUZEVc3RFcOxwpCEiz02re3Vdh3MTuQ+QEh1oBmqsbOYgq+plh\nBS/0V9EnnKYJMi4b6EeACgSSnQKBgQDFafk3/iOrzV3evHMxEugH8KZ7bR9LNIOs\nMAeZdyPyN+z3CwWXNoUKCg5cUSuN//tMNvaJd7XGkiAUq635GRi4ccqoHPzSQbDR\n0ye/bZmyDQLWkLGxxYtLfreGne0ND4U8mVIkrNAB8/v2A5Rd3EqWjPf0PGfrZRkv\nhtoIzHlVYwKBgFwPLo8cA3rQrVfRfgHJ5gwlIXRph1FeJvPk/A8Us6kcbzF/JWXs\n794E/MLEt5vqMZceJFK6nUgcLjf2APT9qnxEkUx8HenNIc2/VdMou+4M2ZkkJI61\nq/nRS3CyeXZeccMxvamrRcU5CF3cEnEmlv6jR03VxAN6Rztm3EdiCY5RAoGBAKZU\nnaixtfhg9kBe42drmJhoCL1hucYxnueLKDwDiAPjXwLfBHzdcMZ+po7dzSa9kUwr\n2xkEBeIi6GjCJbkFjjCJn8h5dALrWkHP+WNuwtqj38pM64ru+GhJgfQoR7yDYS0n\nuXAxMqkSmy4y4eUbYLTsXVYpNx28drX2lupm7awlAoGAN0kYsfEyDYGCx2NMThAB\nJkSCutK8Va8jyVul6Nf5zIYIHY9vsTpeeadSRHBXfCWstLXdp4P8l5yqwx6VZeLw\n9MWVT75eH63VvT6u3PGeeMCugoXbGqXvcWikcvhnm/6n+xgRPCsQ5kLX/8ElpLv1\nROwiIlLr47Vz7Oaal3owo6c=\n-----END PRIVATE KEY-----\n",
+  "client_email": "monoprinter-app@our-service-269213.iam.gserviceaccount.com",
+  "client_id": "107881394185160382562",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/monoprinter-app%40our-service-269213.iam.gserviceaccount.com"
+}
