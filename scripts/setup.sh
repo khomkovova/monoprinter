@@ -4,6 +4,7 @@
 echo $git_password
 echo $git_username
 
+git clone https://$git_username:$git_password@github.com/khomkovova/MonoPrinterConfig.git
 cp MonoPrinterConfig/liqpay_config.json liqpay/config.json  ||  { echo -e "\e[31mFirst download config files. From https://github.com/khomkovova/MonoPrinterConfig.git"  ; exit; }
 cp MonoPrinterConfig/gcp_config.json gcp/config.json  ||  { echo -e "\e[31mFirst download config files. From https://github.com/khomkovova/MonoPrinterConfig.git"  ; exit; }
 cp MonoPrinterConfig/main_config.json config/config.json || { echo -e "\e[31mFirst download config files. From https://github.com/khomkovova/MonoPrinterConfig.git" && exit ; }
