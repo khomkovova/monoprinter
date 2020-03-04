@@ -20,5 +20,6 @@ go get -u github.com/go-delve/delve/cmd/dlv
 chmod 777 /go/bin/dlv
 go get -d ./...
 go build
-./MonoPrinter &
 echo -e "\e[32mOk app is build!\e[39m!"
+./MonoPrinter &
+

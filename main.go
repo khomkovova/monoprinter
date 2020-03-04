@@ -44,7 +44,12 @@ func main() {
 	//http.HandleFunc("/api/checkorderid", ApiCheckOrderId)
 	http.HandleFunc("/api/busytime", ApiBusyTime)
 	http.HandleFunc("/api/terminal/files", ApiTerminalFiles)
-	l, err := net.Listen("tcp4", ":9999")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "80"
+	}
+
+	l, err := net.Listen("tcp4", port)
 	if err != nil {
 		log.Fatal(err)
 	}
