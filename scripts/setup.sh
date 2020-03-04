@@ -15,11 +15,11 @@ cp MonoPrinterConfig/terminalPublicKey.key config/  ||  { echo -e "\e[31mFirst d
 
 ls backup  || { echo -e "\e[31mFirst download backup files. Run backup_download.sh.  From s3://monoprinter/" ; exit; }
 
-echo -e "\e[33mWaiting download dependency"
-go get -u -v github.com/go-delve/delve/cmd/dlv
-chmod 777 /go/bin/dlv
-go get -d -v ./...
-go build
-echo -e "\e[32mOk app is build!\e[39m!"
+#echo -e "\e[33mWaiting download dependency"
+#go get -u -v github.com/go-delve/delve/cmd/dlv
+#chmod 777 /go/bin/dlv
+#go get -d -v ./...
+#go build
+#echo -e "\e[32mOk app is build!\e[39m!"
 ./MonoPrinter &
 
