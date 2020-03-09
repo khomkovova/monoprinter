@@ -3,7 +3,10 @@ terminalPublicKey.key
 config.json
 .idea
 MonoPrinterConfig
-liqpay/config.json
+src/MonoPrinter/liqpay/config.json
+src/*
 #MonoPrinter
 dump.rdb
 temp*
+pkg
+.idea/vcs.xml

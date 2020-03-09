@@ -4,6 +4,10 @@ import (
 	"MonoPrinter/liqpay"
 	"context"
 	_ "database/sql"
+	//"fmt"
+	"io/ioutil"
+	//"os"
+
 	//b64 "encoding/base64"
 	"encoding/json"
 	"errors"
@@ -309,6 +313,51 @@ func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func ApiTerminal(w http.ResponseWriter, r *http.Request) {
+	w = AddResponseWriterHeaders(w)
+	err, _ := getEmailFromCookie(r)
+	if err != nil{
+		log.Println("Error: ", err)
+		log.Println("ApiTerminal() --- Bad cookies. Please sign in again")
+		_, _ = w.Write([]byte("{\"status\" : \"error_cookie\", \"status_description\" : \"Bad cookies. Please sign in again\"}"))
+		return
+	}
+
+	if r.Method == "GET" {
+
+		data, err := ioutil.ReadFile("terminal/config.json")
+		if err != nil{
+			log.Println("Error: ", err)
+			log.Println("ApiTerminal() --- Can't read terminal config")
+			_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't read terminal config\"}"))
+			return
+		}
+		type TerminalConf struct {
+			ID int `json:"ID"`
+			Name string `json:"Name"`
+			Location string `json:"Location"`
+			LocationComments string `json:"LocationComments"`
+			Comments string `json:"Comments"`
+		}
+		type Terminals struct {
+			Terminals []TerminalConf `json:"Terminals"`
+		}
+		var terminals Terminals
+		err = json.Unmarshal([]byte(data), &terminals)
+		if err != nil{
+			log.Println("Error: ", err)
+			log.Println("ApiTerminal() --- Can't read terminal parse")
+			_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't parse terminal config\"}"))
+			return
+		}
+		jsonByte, _ := json.Marshal(terminals)
+		_, _ = w.Write([]byte("{\"status\" : \"ok\", \"status_description\" : \"\", \"data\" : " + string(jsonByte) + "}"))
+		return
+	}
+
+	_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Bad request type\"}"))
+	return
+}
 
 func getEmailFromCookie(r *http.Request) (error, string) {
 	cookie, err := r.Cookie("token")

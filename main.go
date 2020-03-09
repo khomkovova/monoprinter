@@ -43,6 +43,7 @@ func main() {
 	http.HandleFunc("/api/liqpaydata", ApiLiqpayData)
 	//http.HandleFunc("/api/checkorderid", ApiCheckOrderId)
 	http.HandleFunc("/api/busytime", ApiBusyTime)
+	http.HandleFunc("/api/terminal", ApiTerminal)
 	http.HandleFunc("/api/terminal/files", ApiTerminalFiles)
 	port := os.Getenv("PORT")
 	if port == "" {
