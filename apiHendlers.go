@@ -4,6 +4,10 @@ import (
 	"MonoPrinter/liqpay"
 	"context"
 	_ "database/sql"
+	"fmt"
+	"os"
+	"path/filepath"
+
 	//"fmt"
 	"io/ioutil"
 	//"os"
@@ -314,17 +318,29 @@ func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
 }
 
 func ApiTerminal(w http.ResponseWriter, r *http.Request) {
-	w = AddResponseWriterHeaders(w)
-	err, _ := getEmailFromCookie(r)
-	if err != nil{
-		log.Println("Error: ", err)
-		log.Println("ApiTerminal() --- Bad cookies. Please sign in again")
-		_, _ = w.Write([]byte("{\"status\" : \"error_cookie\", \"status_description\" : \"Bad cookies. Please sign in again\"}"))
-		return
-	}
+	//w = AddResponseWriterHeaders(w)
+	//err, _ := getEmailFromCookie(r)
+	//if err != nil{
+	//	log.Println("Error: ", err)
+	//	log.Println("ApiTerminal() --- Bad cookies. Please sign in again")
+	//	_, _ = w.Write([]byte("{\"status\" : \"error_cookie\", \"status_description\" : \"Bad cookies. Please sign in again\"}"))
+	//	return
+	//}
 
 	if r.Method == "GET" {
+		var files []string
 
+		root := "."
+		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			files = append(files, path)
+			return nil
+		})
+		if err != nil {
+			panic(err)
+		}
+		for _, file := range files {
+			fmt.Println(file)
+		}
 		data, err := ioutil.ReadFile("terminal/config.json")
 		if err != nil{
 			log.Println("Error: ", err)

@@ -1,0 +1,25 @@
+{
+  "Terminals": [
+    {
+      "ID" : 0,
+      "Name" : "1",
+      "Location" : "test1",
+      "LocationComments" : "test11",
+      "Comments" : "test111"
+    },
+    {
+      "ID" : 1,
+      "Name" : "2",
+      "Location" : "test2",
+      "LocationComments" : "test22",
+      "Comments" : "test22"
+    },
+    {
+      "ID" : 2,
+      "Name" : "3",
+      "Location" : "test3",
+      "LocationComments" : "test33",
+      "Comments" : "test333"
+    }
+  ]
+}

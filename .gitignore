@@ -1,10 +1,13 @@
 terminalPrivateKey.key
 terminalPublicKey.key
-config.json
+#config.json
 .idea
 MonoPrinterConfig
 src/MonoPrinter/liqpay/config.json
 src/*
+gcp/config.json
+liqpay/config.json
+config/config.json
 #MonoPrinter
 dump.rdb
 temp*
