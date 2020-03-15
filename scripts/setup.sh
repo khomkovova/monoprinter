@@ -13,6 +13,7 @@ cp MonoPrinterConfig/gcp_config.json gcp/config.json  ||  { echo -e "\e[31mFirst
 cp MonoPrinterConfig/main_config.json config/config.json || { echo -e "\e[31mFirst download config files. From https://github.com/khomkovova/MonoPrinterConfig.git" && exit ; }
 cp MonoPrinterConfig/terminalPrivateKey.key config/  ||  { echo -e "\e[31mFirst download config files. From https://github.com/khomkovova/MonoPrinterConfig.git"  ; exit; }
 cp MonoPrinterConfig/terminalPublicKey.key config/  ||  { echo -e "\e[31mFirst download config files. From https://github.com/khomkovova/MonoPrinterConfig.git"  ; exit; }
+cp MonoPrinterConfig/terminal_config.json terminal/config.json  ||  { echo -e "\e[31mFirst download config files. From https://github.com/khomkovova/MonoPrinterConfig.git"  ; exit; }
 
 ls backup  || { echo -e "\e[31mFirst download backup files. Run backup_download.sh.  From s3://monoprinter/" ; exit; }
 
