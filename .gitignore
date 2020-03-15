@@ -8,6 +8,7 @@ src/*
 gcp/config.json
 liqpay/config.json
 config/config.json
+terminal/config.json
 #MonoPrinter
 dump.rdb
 temp*
