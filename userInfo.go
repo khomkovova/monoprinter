@@ -33,12 +33,13 @@ type Order struct {
 	Status string
 }
 
+var NEW_USER_BALANCE = 5
 func (userInfo *UserInfo) createNewUser() error {
 	if userInfo.Email == "" {
 		err := errors.New("Not set email")
 		return err
 	}
-	userInfo.NumberPages = 0
+	userInfo.NumberPages = NEW_USER_BALANCE
 	_, err := mongoUsersCollection.InsertOne(context.TODO(), userInfo)
 	if err != nil {
 		fmt.Println("Not insert new users")
