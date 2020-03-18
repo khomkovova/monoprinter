@@ -18,6 +18,8 @@ type FileInfo struct {
 	Status string
 }
 var CountMonoPrinter = 5
+var MAXIMUM_PAGES = 15
+var MINIMUM_PAGES = 5
 func (fileInfo *FileInfo) checkInfo() error {
 	if fileInfo.UniqueId == ""{
 		return errors.New("Don't set UniqueId")
@@ -26,6 +28,12 @@ func (fileInfo *FileInfo) checkInfo() error {
 	strings.Replace(fileInfo.Filename, "..", "", -1)
 	if fileInfo.Filename == ""{
 		return errors.New("Don't set Filename")
+	}
+	if fileInfo.NumberPage < MINIMUM_PAGES{
+		return errors.New("File should have minimum 5 pages")
+	}
+	if fileInfo.NumberPage > MAXIMUM_PAGES{
+		return errors.New("File should have maximum 15 pages")
 	}
 
 	var printer Printer

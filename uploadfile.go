@@ -25,6 +25,7 @@ type FileExif struct {
 	PageCount  int    `json:"PageCount"`
 	CreateDate string `json:"CreateDate"`
 }
+var PDF_CONVERTER_TIMEOUT time.Duration = 30
 
 func (uploadFile *UploadFile) getPDF() error {
 
@@ -54,7 +55,7 @@ func (uploadFile *UploadFile) getPDF() error {
 		done <- cmd.Wait()
 	}()
 	select {
-	case <-time.After(10000 * time.Second):
+	case <-time.After( PDF_CONVERTER_TIMEOUT * time.Second):
 		if err := cmd.Process.Kill(); err != nil {
 			log.Fatal("soffice failed to kill process: ", err)
 			return err

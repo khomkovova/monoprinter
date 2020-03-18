@@ -4,9 +4,9 @@ import (
 	"MonoPrinter/liqpay"
 	"context"
 	_ "database/sql"
-	"fmt"
-	"os"
-	"path/filepath"
+	//"fmt"
+	//"os"
+	//"path/filepath"
 
 	//"fmt"
 	"io/ioutil"
@@ -328,24 +328,12 @@ func ApiTerminal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "GET" {
-		var files []string
 
-		root := "."
-		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-			files = append(files, path)
-			return nil
-		})
-		if err != nil {
-			panic(err)
-		}
-		for _, file := range files {
-			fmt.Println(file)
-		}
 		data, err := ioutil.ReadFile("terminal/config.json")
 		if err != nil{
 			log.Println("Error: ", err)
-			log.Println("ApiTerminal() --- Can't read terminal config")
-			_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't read terminal config\"}"))
+			log.Println("ApiTerminal() --- Can't get terminal config")
+			_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't get terminal config\"}"))
 			return
 		}
 		type TerminalConf struct {
