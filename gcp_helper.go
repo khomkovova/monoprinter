@@ -7,7 +7,7 @@ import (
 	//"os"
 	"time"
 	"cloud.google.com/go/storage"
-	"MonoPrinter/config"
+	"github.com/khomkovova/MonoPrinter/config"
 )
 
 func gcp_upload_file(newFile UploadFile)  error {

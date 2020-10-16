@@ -1,7 +1,7 @@
 package main
 
 import (
-	"MonoPrinter/config"
+	"github.com/khomkovova/MonoPrinter/config"
 	"context"
 	"fmt"
 	"time"

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"MonoPrinter/rsaparser"
+	"github.com/khomkovova/MonoPrinter/rsaparser"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -14,7 +14,7 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"MonoPrinter/config"
+	"github.com/khomkovova/MonoPrinter/config"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

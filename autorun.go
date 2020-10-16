@@ -1,7 +1,7 @@
 package main
 
 import (
-	"MonoPrinter/liqpay"
+	"github.com/khomkovova/MonoPrinter/liqpay"
 	"go.mongodb.org/mongo-driver/bson"
 	"log"
 	"time"

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"MonoPrinter/liqpay"
+	"github.com/khomkovova/MonoPrinter/liqpay"
 	"context"
 	_ "database/sql"
 	//"fmt"
