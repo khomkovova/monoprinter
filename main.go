@@ -69,7 +69,9 @@ func initMongoDb(conf config.MongodbConf) {
 	//mongoPrinterCollection = *cP
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb+srv://" + conf.Username + ":" + conf.Password + "@" + conf.Host + "/" + conf.DatabaseName + "?retryWrites=true&w=majority"))
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	collectionUsers := client.Database("printbox").Collection("users")
 	collectionPrinters := client.Database("printbox").Collection("printers")
 	mongoUsersCollection = *collectionUsers

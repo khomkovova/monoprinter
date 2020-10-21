@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/khomkovova/MonoPrinter/helper"
 	"github.com/khomkovova/MonoPrinter/rsaparser"
+	_ "github.com/khomkovova/MonoPrinter/models"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -9,7 +11,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
+	_"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,15 +26,17 @@ const STATUS_WAITING_DELETE_FROM_TERMINAL = "STATUS_WAITING_DELETE_FROM_TERMINAL
 func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("token")
 	if err != nil {
-		_, _ = w.Write([]byte("Bad cookie"))
+		responseByte, _ := helper.GenerateErrorMsg(err, "Can't get cookies")
+		_, _ = w.Write(responseByte)
+		return
 	}
 	sessionToken := cookie.Value
 	err, terminalId := decryptTerminalCookie(sessionToken)
 	if err != nil {
-		_, _ = w.Write([]byte("Bad cookie"))
+		responseByte, _ := helper.GenerateErrorMsg(err, "Can't decrypt cookies")
+		_, _ = w.Write(responseByte)
 		return
 	}
-	//fmt.Println("terminalId: ", terminalId)
 
 	if r.Method == "GET" {
 		keys, _ := r.URL.Query()["uniqueid"]
@@ -41,59 +45,69 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			var conf config.Configuration
 			err := conf.ParseConfig()
 			if err != nil {
-				log.Fatalf("Failed to create client: %v", err)
+				responseByte, _ := helper.GenerateErrorMsg(err, "Can't parse config")
+				_, _ = w.Write(responseByte)
 				return
 			}
 			bucketName := conf.GCP.BucketUsersFiles
+			data := map[string]string{
+				"fileUrl": "https://storage.googleapis.com/" + bucketName + "/" + uniqueid,
+			}
+			jsonByte, _ := json.Marshal(data)
+			responseByte, _ := helper.GenerateOkMsg(string(jsonByte), "")
+			_, _ = w.Write(responseByte)
+			return
+		} else {
 
-			_, _ = w.Write([]byte("https://storage.googleapis.com/" + bucketName + "/" + uniqueid))
+			var files []FileInfo
+			var file FileInfo
+			result, err := mongoUsersCollection.Distinct(context.TODO(), "files", bson.D{{}})
+			if err != nil {
+				responseByte, _ := helper.GenerateErrorMsg(err, "Can't run distinct command")
+				_, _ = w.Write(responseByte)
+				return
+			}
+			if result == nil {
+				jsonByte, _ := json.Marshal(files)
+				responseByte, _ := helper.GenerateOkMsg(string(jsonByte), "")
+				_, _ = w.Write(responseByte)
+				return
+			}
+			for _, i := range result {
+				resp, err := bson.Marshal(i)
+				if err != nil {
+					_, _ = helper.GenerateErrorMsg(err, "Can't marshal interface")
+					continue
+				}
+
+				err = bson.Unmarshal(resp, &file)
+				if err != nil {
+					_, _ = helper.GenerateErrorMsg(err, "Can't unmarshal data")
+					continue
+				}
+				files = append(files, file)
+			}
+
+			for i := 0; i < len(files); i++ {
+				file := files[i]
+				if file.IdPrinter != terminalId || (file.Status != STATUS_WAITING_DOWNLOAD && file.Status != STATUS_WAITING_DELETE_FROM_TERMINAL) {
+					files = removeFromList(files, i)
+					i--
+					continue
+				}
+				nowTime := time.Now()
+				layout := "2006-01-02T15:04:05"
+				PrintingDate, _ := time.Parse(layout, file.PrintingDate)
+				if (nowTime.Add(time.Minute * 1)).After(PrintingDate) && len(files) > 1 {
+					files = removeFromList(files, i)
+					i--
+				}
+			}
+			jsonByte, _ := json.Marshal(files)
+			responseByte, _ := helper.GenerateOkMsg(string(jsonByte), "")
+			_, _ = w.Write(responseByte)
 			return
 		}
-
-		var files []FileInfo
-		var file FileInfo
-		result, err := mongoUsersCollection.Distinct(context.TODO(), "files", bson.D{{}})
-		if err != nil {
-			log.Println("Error: ", err)
-			log.Println("ApiTerminalFiles() --- Can't run distinct command")
-			_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't run distinct command\"}"))
-			return
-		}
-		for _, i := range result {
-			resp, err := bson.Marshal(i)
-			if err != nil {
-				log.Println("Error: ", err)
-				log.Println("ApiTerminalFiles() --- Can't marshal interface")
-				continue
-			}
-
-			err = bson.Unmarshal(resp, &file)
-			if err != nil {
-				log.Println("Error: ", err)
-				log.Println("ApiTerminalFiles() --- Can't unmarshal data")
-				continue
-			}
-			files = append(files, file)
-		}
-
-		for i := 0; i < len(files); i++ {
-			file := files[i]
-			if file.IdPrinter != terminalId || (file.Status != STATUS_WAITING_DOWNLOAD && file.Status != STATUS_WAITING_DELETE_FROM_TERMINAL) {
-				files = removeFromList(files, i)
-				i--
-				continue
-			}
-			nowTime := time.Now()
-			layout := "2006-01-02T15:04:05"
-			PrintingDate, _ := time.Parse(layout, file.PrintingDate)
-			if (nowTime.Add(time.Minute * 1)).After(PrintingDate) && len(files) > 1 {
-				files = removeFromList(files, i)
-				i--
-			}
-		}
-		jsonByte, _ := json.Marshal(files)
-		_, _ = w.Write(jsonByte)
-		return
 	}
 
 	if r.Method == "PUT" {
@@ -106,18 +120,24 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			var st status
 			err := json.NewDecoder(r.Body).Decode(&st)
 			if err != nil {
-				_, _ = w.Write([]byte("Bad request"))
+				responseByte, _ := helper.GenerateErrorMsg(err, "Can't decode request")
+				_, _ = w.Write(responseByte)
 				return
 			}
 			_, err = mongoUsersCollection.UpdateOne(context.TODO(), bson.M{"files.uniqueid": uniqueid, "files.idprinter": terminalId}, bson.M{"$set": bson.M{"files.$.status": st.Status}})
 			if err != nil {
-				_, _ = w.Write([]byte("Not found file"))
+				responseByte, _ := helper.GenerateErrorMsg(err, "Can't find file")
+				_, _ = w.Write(responseByte)
 				return
 			}
-
-			_, _ = w.Write([]byte("OK"))
+			responseByte, _ := helper.GenerateOkMsg("", "Status changed")
+			_, _ = w.Write(responseByte)
+			return
 		}
 	}
+	responseByte, _ := helper.GenerateErrorMsg(errors.New("Bad request"), "Bad request")
+	_, _ = w.Write(responseByte)
+	return
 }
 
 func decryptTerminalCookie(cookie string) (err error, terminalId int) {
@@ -177,7 +197,7 @@ func getPrivateKey() (err error, key *rsa.PrivateKey) {
 
 	sEnc := base64.StdEncoding.EncodeToString(ciphertext)
 	_ = ioutil.WriteFile("config/terminalToken.key", []byte(sEnc), 0644)
-	fmt.Println(sEnc)
+	log.Println(sEnc)
 	return nil, privateKey
 }
 
