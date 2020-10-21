@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/khomkovova/MonoPrinter/helper"
+	"github.com/khomkovova/MonoPrinter/models"
 	"github.com/khomkovova/MonoPrinter/rsaparser"
 	_ "github.com/khomkovova/MonoPrinter/models"
 	"context"
@@ -50,10 +51,9 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			bucketName := conf.GCP.BucketUsersFiles
-			data := map[string]string{
-				"fileUrl": "https://storage.googleapis.com/" + bucketName + "/" + uniqueid,
-			}
-			jsonByte, _ := json.Marshal(data)
+			var gcpFile models.GCPFile
+			gcpFile.FileUrl = "https://storage.googleapis.com/" + bucketName + "/" + uniqueid
+			jsonByte, _ := json.Marshal(gcpFile)
 			responseByte, _ := helper.GenerateOkMsg(string(jsonByte), "")
 			_, _ = w.Write(responseByte)
 			return
