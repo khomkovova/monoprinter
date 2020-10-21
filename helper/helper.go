@@ -25,6 +25,7 @@ func GenerateOkMsg(data string, comment string) ([]byte, error) {
 	details := runtime.FuncForPC(pc)
 	log.Printf("Info msg from function: %s\n", details.Name())
 	log.Printf("Comment: %s\n", comment)
+	log.Printf("Data: %s\n", data)
 	var response models.Response
 	response.Status = "ok"
 	response.StatusDescription = comment
