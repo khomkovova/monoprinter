@@ -8,11 +8,13 @@ import (
 )
 
 func GenerateErrorMsg(err error, comment string) ([]byte, error) {
-	pc, _, _, _ := runtime.Caller(1)
+	pc, _, line, _ := runtime.Caller(1)
 	details := runtime.FuncForPC(pc)
 	log.Printf("Error in function: %s\n", details.Name())
 	log.Printf("With error msg: %s\n", err)
 	log.Printf("Comment: %s\n", comment)
+	log.Printf("Line: %d\n\n", line)
+
 	var response models.Response
 	response.Status = "error"
 	response.StatusDescription = comment
@@ -21,11 +23,13 @@ func GenerateErrorMsg(err error, comment string) ([]byte, error) {
 }
 
 func GenerateOkMsg(data string, comment string) ([]byte, error) {
-	pc, _, _, _ := runtime.Caller(1)
+	pc, _, line, _ := runtime.Caller(1)
 	details := runtime.FuncForPC(pc)
 	log.Printf("Info msg from function: %s\n", details.Name())
 	log.Printf("Comment: %s\n", comment)
 	log.Printf("Data: %s\n", data)
+	log.Printf("Line: %d\n\n", line)
+
 	var response models.Response
 	response.Status = "ok"
 	response.StatusDescription = comment
