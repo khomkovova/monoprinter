@@ -22,9 +22,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-const STATUS_WAITING_DOWNLOAD = "STATUS_WAITING_DOWNLOAD"
-const STATUS_WAITING_DELETE_FROM_TERMINAL = "STATUS_WAITING_DELETE_FROM_TERMINAL"
-
 func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("token")
 	if err != nil {
@@ -91,7 +88,7 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 
 			for i := 0; i < len(files); i++ {
 				file := files[i]
-				if file.IdPrinter != terminalId || (file.Status != STATUS_WAITING_DOWNLOAD && file.Status != STATUS_WAITING_DELETE_FROM_TERMINAL) {
+				if file.IdPrinter != terminalId || (file.Status != constant.STATUS_WAITING_DOWNLOAD && file.Status != constant.STATUS_WAITING_DELETE_FROM_TERMINAL) {
 					files = removeFromList(files, i)
 					i--
 					continue
