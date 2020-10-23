@@ -100,7 +100,7 @@ func (uploadFile *UploadFile) getPDF() error {
 	}
 	uploadFile.Info.NumberPage = fileExif[0].PageCount
 	uploadFile.Info.Size = fileExif[0].FileSize
-	uploadFile.Info.UploadDate = fileExif[0].CreateDate
+	uploadFile.Info.UploadDate = time.Now().Local().Format("2006-01-02T15:04:05")
 	uploadFile.FilePdf = pdfFile
 	uploadFile.Info.Status = "STATUS_WAITING_DOWNLOAD"
 	return nil
