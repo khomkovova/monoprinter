@@ -25,14 +25,14 @@ import (
 func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("token")
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, "Can't get cookies")
+		responseByte, _ := helper.GenerateErrorMsg(err, "error", "Can't get cookies")
 		_, _ = w.Write(responseByte)
 		return
 	}
 	sessionToken := cookie.Value
 	err, terminalId := decryptTerminalCookie(sessionToken)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, "Can't decrypt cookies")
+		responseByte, _ := helper.GenerateErrorMsg(err, "error","Can't decrypt cookies")
 		_, _ = w.Write(responseByte)
 		return
 	}
@@ -44,7 +44,7 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			var conf config.Configuration
 			err := conf.ParseConfig()
 			if err != nil {
-				responseByte, _ := helper.GenerateErrorMsg(err, "Can't parse config")
+				responseByte, _ := helper.GenerateErrorMsg(err, "error","Can't parse config")
 				_, _ = w.Write(responseByte)
 				return
 			}
@@ -52,7 +52,7 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			var gcpFile models.GCPFile
 			gcpFile.FileUrl = "https://storage.googleapis.com/" + bucketName + "/" + uniqueid
 			jsonByte, _ := json.Marshal(gcpFile)
-			responseByte, _ := helper.GenerateOkMsg(string(jsonByte), "")
+			responseByte, _ := helper.GenerateInfoMsg(string(jsonByte), "")
 			_, _ = w.Write(responseByte)
 			return
 		} else {
@@ -61,26 +61,26 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			var file FileInfo
 			result, err := mongoUsersCollection.Distinct(context.TODO(), "files", bson.D{{}})
 			if err != nil {
-				responseByte, _ := helper.GenerateErrorMsg(err, "Can't run distinct command")
+				responseByte, _ := helper.GenerateErrorMsg(err, "error","Can't run distinct command")
 				_, _ = w.Write(responseByte)
 				return
 			}
 			if result == nil {
 				jsonByte, _ := json.Marshal(files)
-				responseByte, _ := helper.GenerateOkMsg(string(jsonByte), "")
+				responseByte, _ := helper.GenerateInfoMsg(string(jsonByte), "")
 				_, _ = w.Write(responseByte)
 				return
 			}
 			for _, i := range result {
 				resp, err := bson.Marshal(i)
 				if err != nil {
-					_, _ = helper.GenerateErrorMsg(err, "Can't marshal interface")
+					_, _ = helper.GenerateErrorMsg(err, "error","Can't marshal interface")
 					continue
 				}
 
 				err = bson.Unmarshal(resp, &file)
 				if err != nil {
-					_, _ = helper.GenerateErrorMsg(err, "Can't unmarshal data")
+					_, _ = helper.GenerateErrorMsg(err, "error","Can't unmarshal data")
 					continue
 				}
 				files = append(files, file)
@@ -102,7 +102,7 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			jsonByte, _ := json.Marshal(files)
-			responseByte, _ := helper.GenerateOkMsg(string(jsonByte), "")
+			responseByte, _ := helper.GenerateInfoMsg(string(jsonByte), "")
 			_, _ = w.Write(responseByte)
 			return
 		}
@@ -118,22 +118,22 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			var st status
 			err := json.NewDecoder(r.Body).Decode(&st)
 			if err != nil {
-				responseByte, _ := helper.GenerateErrorMsg(err, "Can't decode request")
+				responseByte, _ := helper.GenerateErrorMsg(err, "error","Can't decode request")
 				_, _ = w.Write(responseByte)
 				return
 			}
 			_, err = mongoUsersCollection.UpdateOne(context.TODO(), bson.M{"files.uniqueid": uniqueid, "files.idprinter": terminalId}, bson.M{"$set": bson.M{"files.$.status": st.Status}})
 			if err != nil {
-				responseByte, _ := helper.GenerateErrorMsg(err, "Can't find file")
+				responseByte, _ := helper.GenerateErrorMsg(err, "error","Can't find file")
 				_, _ = w.Write(responseByte)
 				return
 			}
-			responseByte, _ := helper.GenerateOkMsg("", "Status changed")
+			responseByte, _ := helper.GenerateInfoMsg("", "Status changed")
 			_, _ = w.Write(responseByte)
 			return
 		}
 	}
-	responseByte, _ := helper.GenerateErrorMsg(errors.New("Bad request"), "Bad request")
+	responseByte, _ := helper.GenerateErrorMsg(errors.New("Bad request"), "error","Bad request")
 	_, _ = w.Write(responseByte)
 	return
 }

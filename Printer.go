@@ -87,11 +87,11 @@ func (printer *Printer)  getPrintingTimeIndex(printingTimeStr string, delay int)
 	maxPrintingTime := timeNow.Add(time.Hour*24*7)
 
 	if minPrintingTime.After(printingTime){
-		return 0, errors.New("Can't set printingdate before 5 minut")
+		return 0, errors.New("Can't set printing date before 5 minut")
 	}
 
 	if maxPrintingTime.Before(printingTime){
-		return 0, errors.New("Can't set printingdate after 7 day")
+		return 0, errors.New("Can't set printing date after 7 day")
 	}
 
 	var TimeLine []time.Time
@@ -118,5 +118,5 @@ func (printer *Printer)  getPrintingTimeIndex(printingTimeStr string, delay int)
 		return len(TimeLine), nil
 	}
 
-	return 0, errors.New("Not added printing time to TimeLine")
+	return 0, errors.New("Check printing time")
 }

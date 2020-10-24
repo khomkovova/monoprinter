@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/khomkovova/MonoPrinter/constant"
 	"io"
 	"log"
 	"math/rand"
@@ -100,9 +101,9 @@ func (uploadFile *UploadFile) getPDF() error {
 	}
 	uploadFile.Info.NumberPage = fileExif[0].PageCount
 	uploadFile.Info.Size = fileExif[0].FileSize
-	uploadFile.Info.UploadDate = time.Now().Local().Format("2006-01-02T15:04:05")
+	uploadFile.Info.UploadDate = time.Now().Local().Format(constant.TIME_LAYOUT)
 	uploadFile.FilePdf = pdfFile
-	uploadFile.Info.Status = "STATUS_WAITING_DOWNLOAD"
+	uploadFile.Info.Status = constant.STATUS_WAITING_DOWNLOAD
 	return nil
 
 }

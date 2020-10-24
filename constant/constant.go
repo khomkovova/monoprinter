@@ -15,3 +15,8 @@ const TIME_RETIRED_OLD_FILE = time.Minute * 2
 const TIME_OFTEN_REPEAT_ADD_NEW_FILE = time.Second * 2
 const TIME_OFTEN_REPEAT_PRINT_FILE= time.Second * 2
 const TIME_LAYOUT = "2006-01-02T15:04:05"
+
+const ERROR_COOKIES  = "error_cookies"
+const ERROR_SERVER = "error_server"
+const ERROR_REQUEST = "error_request"
+const ERROR_USER  =  "error_user"

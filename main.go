@@ -1,24 +1,17 @@
 package main
 
 import (
-	"github.com/khomkovova/MonoPrinter/config"
 	"context"
 	"fmt"
-	"time"
-
+	"github.com/khomkovova/MonoPrinter/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	//"gopkg.in/mgo.v2"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"time"
 )
-
-
-
-
-
 
 var mongoUsersCollection mongo.Collection
 var mongoPrinterCollection mongo.Collection
@@ -50,7 +43,7 @@ func main() {
 		port = "80"
 	}
 
-	l, err := net.Listen("tcp4", ":" + port)
+	l, err := net.Listen("tcp4", ":"+port)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,7 +61,7 @@ func initMongoDb(conf config.MongodbConf) {
 	//mongoUsersCollection = *c
 	//mongoPrinterCollection = *cP
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb+srv://" + conf.Username + ":" + conf.Password + "@" + conf.Host + "/" + conf.DatabaseName + "?retryWrites=true&w=majority"))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb+srv://"+conf.Username+":"+conf.Password+"@"+conf.Host+"/"+conf.DatabaseName+"?retryWrites=true&w=majority"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,7 +86,6 @@ func initAll() error {
 
 }
 
-
-func test()  {
+func test() {
 
 }

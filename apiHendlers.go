@@ -1,9 +1,11 @@
 package main
 
 import (
-	"github.com/khomkovova/MonoPrinter/liqpay"
 	"context"
 	_ "database/sql"
+	"github.com/khomkovova/MonoPrinter/constant"
+	"github.com/khomkovova/MonoPrinter/helper"
+	"github.com/khomkovova/MonoPrinter/liqpay"
 	//"fmt"
 	//"os"
 	//"path/filepath"
@@ -21,57 +23,47 @@ import (
 	"log"
 	"net/http"
 	"time"
-
 )
 
-
-
 type GoogleOAuth struct {
-	Token    string `json:"token"`
-
+	Token string `json:"token"`
 }
 
 type Tokeninfo struct {
-	Email string `json:"email"`
-	Sub string `json:"sub"`
-	Name string `json:"name"`
-	Picture string `json:"picture,omitempty"`
-	Error string `json:"error"`
+	Email            string `json:"email"`
+	Sub              string `json:"sub"`
+	Name             string `json:"name"`
+	Picture          string `json:"picture,omitempty"`
+	Error            string `json:"error"`
 	ErrorDescription string `json:"error_description"`
 }
 
-
-func ApiGoogleSignin(w http.ResponseWriter, r *http.Request)  {
+func ApiGoogleSignin(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
 	var googleOAuth GoogleOAuth
 	err := json.NewDecoder(r.Body).Decode(&googleOAuth)
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiGoogleSignin() --- Can't parse json")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't parse json\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + googleOAuth.Token)
 	if err != nil {
-
-		log.Println("Error: ", err)
-		log.Println("ApiGoogleSignin() --- Can't check google token")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't check google token\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	var tokenInfo Tokeninfo
 
 	err = json.NewDecoder(resp.Body).Decode(&tokenInfo)
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiGoogleSignin() --- Can't parse google token")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't parse google token\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
+		_, _ = w.Write(responseByte)
 		return
 	}
-	if tokenInfo.Error != ""{
-		log.Println("Error: ", tokenInfo.Error)
-		log.Println("ApiGoogleSignin() --- ", tokenInfo.ErrorDescription)
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"" + tokenInfo.ErrorDescription + "\"}"))
+	if tokenInfo.Error != "" {
+		responseByte, _ := helper.GenerateErrorMsg(errors.New(tokenInfo.Error), constant.ERROR_COOKIES, "Bad cookies")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	var newUsers UserInfo
@@ -83,20 +75,16 @@ func ApiGoogleSignin(w http.ResponseWriter, r *http.Request)  {
 	newUsers.RegistrationTime = time.Now().Format(time.RFC3339)
 	err = newUsers.checkUser()
 	if err == nil {
-		log.Println("Error: ", err)
-		log.Println("ApiGoogleSignin() --- User isn't registered")
 		err = newUsers.createNewUser()
 		if err != nil {
-			log.Println("Error: ", err)
-			log.Println("ApiGoogleSignin() --- Your credentials are bad, try to change account")
-			_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Your credentials are bad, try to change account\"}"))
+			responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "Try to change account")
+			_, _ = w.Write(responseByte)
 			return
 		}
 		cookie := http.Cookie{Name: "token", Value: googleOAuth.Token}
 		http.SetCookie(w, &cookie)
 		return
 	}
-	log.Println("debug --- ", newUsers.Email)
 	cookie := http.Cookie{Name: "token", Value: googleOAuth.Token}
 	http.SetCookie(w, &cookie)
 	return
@@ -106,40 +94,37 @@ func ApiGetShortUserInfo(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
 	log.Println("debug() --- ", r.Body)
 	err, email := getEmailFromCookie(r)
-	if err != nil{
-		log.Println("Error: ", err)
-		log.Println("ApiGetShortUserInfo() --- Bad cookies. Please sign in again")
-		_, _ = w.Write([]byte("{\"status\" : \"error_cookie\", \"status_description\" : \"Bad cookies. Please sign in again\"}"))
+	if err != nil {
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	var user UserInfo
 	user.Email = email
 	err = user.getInfo()
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiGetShortUserInfo() --- Can't get information about user")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't get information about user\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+		_, _ = w.Write(responseByte)
 		return
 	}
 
 	infoJson, err := user.makeStringJsonInfo()
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiGetShortUserInfo() --- Can't marshall user information into json")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't marshall user information into json\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+		_, _ = w.Write(responseByte)
 		return
 	}
-	_, _ = w.Write([]byte("{\"status\" : \"ok\", \"status_description\" : \"\", \"data\" : " + infoJson + "}"))
+	responseByte, _ := helper.GenerateInfoMsg(infoJson, "")
+	_, _ = w.Write(responseByte)
 	return
 }
 
 func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
 	err, email := getEmailFromCookie(r)
-	if err != nil{
-		log.Println("Error: ", err)
-		log.Println("ApiUploadFile() --- Bad cookies. Please sign in again")
-		_, _ = w.Write([]byte("{\"status\" : \"error_cookie\", \"status_description\" : \"Bad cookies. Please sign in again\"}"))
+	if err != nil {
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
+		_, _ = w.Write(responseByte)
 		return
 	}
 
@@ -147,24 +132,21 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 	user.Email = email
 	err = user.getInfo()
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiUploadFile() --- Can't get information about user")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't get information about user\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+		_, _ = w.Write(responseByte)
 		return
 	}
 
 	err = r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiUploadFile() --- Can't parse multipart form")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't parse multipart form\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad request")
+		_, _ = w.Write(responseByte)
 		return
 	}
 
 	if len(r.MultipartForm.Value["json"]) == 0 {
-		log.Println("Error: ", err)
-		log.Println("ApiUploadFile() --- Can't parse multipart form")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't parse multipart form\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad request")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	var uploadFile UploadFile
@@ -172,41 +154,35 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal([]byte(jsonStr), &uploadFile.Info)
 
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiUploadFile() --- Can't parse information about file")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't parse information about file\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad request")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	file, _, err := r.FormFile("uploadfile")
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiUploadFile() --- Can't get file date from request")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't get file date from request\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad request")
+		_, _ = w.Write(responseByte)
 		return
 	}
-
 	uploadFile.File = file
 
 	err = user.addFile(uploadFile)
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiUploadFile() --- ", err)
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"" + err.Error() + "\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_USER, err.Error())
+		_, _ = w.Write(responseByte)
 		return
 	}
-	_, _ = w.Write([]byte("{\"status\" : \"ok\", \"status_description\" : \"The file is successfully uploaded\"}"))
+	responseByte, _ := helper.GenerateInfoMsg("", "File successfully uploaded")
+	_, _ = w.Write(responseByte)
 	return
 }
-
 
 func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
 	err, email := getEmailFromCookie(r)
-	if err != nil{
-		log.Println("Error: ", err)
-
-		log.Println("ApiLiqpayData() --- Bad cookies. Please sign in again")
-		_, _ = w.Write([]byte("{\"status\" : \"error_cookie\", \"status_description\" : \"Bad cookies. Please sign in again\"}"))
+	if err != nil {
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	type Count struct {
@@ -215,9 +191,8 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	count := Count{}
 	err = json.NewDecoder(r.Body).Decode(&count)
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiLiqpayData() --- Can't parse json with count pages")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't parse json with count pages\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_REQUEST, "Bad request")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	newOrder := liqpay.CreateNewOrder()
@@ -225,9 +200,8 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	newOrder.SetCountMoney(count.Count)
 	err = newOrder.MakeId()
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiLiqpayData() --- Can't create new order")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't create new order\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	orderId := newOrder.GetOrderId()
@@ -235,39 +209,34 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	user.Email = email
 	err = user.getInfo()
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiLiqpayData() --- Can't get order id")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't get order id\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	err = user.addOrder(orderId, "wait_accept")
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiLiqpayData() --- Can't add new order")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't add new order\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	err = newOrder.MakeRequestData()
 	if err != nil {
-		log.Println("Error: ", err)
-		log.Println("ApiLiqpayData() --- Can't make data request")
-		_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't make data request\"}"))
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+		_, _ = w.Write(responseByte)
 		return
 	}
 	requestData := newOrder.GetRequestData()
-	_, _ = w.Write([]byte("{\"status\" : \"ok\", \"status_description\" : \"\", \"data\" : " + requestData + "}"))
+	responseByte, _ := helper.GenerateInfoMsg(requestData, "File successfully uploaded")
+	_, _ = w.Write(responseByte)
 	return
 }
-
-
 
 func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
 	err, _ := getEmailFromCookie(r)
-	if err != nil{
-		log.Println("Error: ", err)
-		log.Println("ApiLiqpayData() --- Bad cookies. Please sign in again")
-		_, _ = w.Write([]byte("{\"status\" : \"error_cookie\", \"status_description\" : \"Bad cookies. Please sign in again\"}"))
+	if err != nil {
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
+		_, _ = w.Write(responseByte)
 		return
 	}
 
@@ -277,26 +246,23 @@ func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
 		var file FileInfo
 		result, err := mongoUsersCollection.Distinct(context.TODO(), "files", bson.D{{}})
 		if err != nil {
-			log.Println("Error: ", err)
-			log.Println("CheckOrders() --- Can't run distinct command")
-			_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't run distinct command\"}"))
+			responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+			_, _ = w.Write(responseByte)
 			return
 		}
 		for _, i := range result {
 			resp, err := bson.Marshal(i)
 			if err != nil {
-				log.Println("Error: ", err)
-				log.Println("CheckOrders() --- Can't marshal interface")
+				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
 				continue
 			}
 
 			err = bson.Unmarshal(resp, &file)
 			if err != nil {
-				log.Println("Error: ", err)
-				log.Println("CheckOrders() --- Can't unmarshal data")
+				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
 				continue
 			}
-			file.UniqueId =""
+			file.UniqueId = ""
 			files = append(files, file)
 		}
 		for i := 0; i < len(files); i++ {
@@ -310,56 +276,57 @@ func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		jsonByte, _ := json.Marshal(files)
-		_, _ = w.Write([]byte("{\"status\" : \"ok\", \"status_description\" : \"\", \"data\" : " + string(jsonByte) + "}"))
+		responseByte, _ := helper.GenerateInfoMsg(string(jsonByte), "")
+		_, _ = w.Write(responseByte)
 		return
 	}
-	_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Bad request type\"}"))
+	responseByte, _ := helper.GenerateErrorMsg(errors.New("Bad request type"), constant.ERROR_REQUEST, "Bad request")
+	_, _ = w.Write(responseByte)
 	return
 }
 
 func ApiTerminal(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
 	err, _ := getEmailFromCookie(r)
-	if err != nil{
-		log.Println("Error: ", err)
-		log.Println("ApiTerminal() --- Bad cookies. Please sign in again")
-		_, _ = w.Write([]byte("{\"status\" : \"error_cookie\", \"status_description\" : \"Bad cookies. Please sign in again\"}"))
+	if err != nil {
+		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
+		_, _ = w.Write(responseByte)
 		return
 	}
 
 	if r.Method == "GET" {
 
 		data, err := ioutil.ReadFile("terminal/config.json")
-		if err != nil{
-			log.Println("Error: ", err)
-			log.Println("ApiTerminal() --- Can't get terminal config")
-			_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't get terminal config\"}"))
+		if err != nil {
+			responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+			_, _ = w.Write(responseByte)
 			return
 		}
 		type TerminalConf struct {
-			ID int `json:"ID"`
-			Name string `json:"Name"`
-			Location string `json:"Location"`
+			ID               int    `json:"ID"`
+			Name             string `json:"Name"`
+			Location         string `json:"Location"`
 			LocationComments string `json:"LocationComments"`
-			Comments string `json:"Comments"`
+			Comments         string `json:"Comments"`
 		}
 		type Terminals struct {
 			Terminals []TerminalConf `json:"Terminals"`
 		}
 		var terminals Terminals
 		err = json.Unmarshal([]byte(data), &terminals)
-		if err != nil{
-			log.Println("Error: ", err)
-			log.Println("ApiTerminal() --- Can't read terminal parse")
-			_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Can't parse terminal config\"}"))
+		if err != nil {
+			responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+			_, _ = w.Write(responseByte)
 			return
 		}
 		jsonByte, _ := json.Marshal(terminals)
-		_, _ = w.Write([]byte("{\"status\" : \"ok\", \"status_description\" : \"\", \"data\" : " + string(jsonByte) + "}"))
+		responseByte, _ := helper.GenerateInfoMsg(string(jsonByte), "")
+		_, _ = w.Write(responseByte)
 		return
 	}
 
-	_, _ = w.Write([]byte("{\"status\" : \"error\", \"status_description\" : \"Bad request type\"}"))
+	responseByte, _ := helper.GenerateErrorMsg(errors.New("Bad request type"), constant.ERROR_REQUEST, "Bad request")
+	_, _ = w.Write(responseByte)
 	return
 }
 
@@ -382,7 +349,6 @@ func getEmailFromCookie(r *http.Request) (error, string) {
 
 	return nil, tokenInfo.Email
 }
-
 
 //TO DO NEED TO CHECK
 //func ApiCheckOrderId(w http.ResponseWriter, r *http.Request) {
@@ -449,9 +415,6 @@ func getEmailFromCookie(r *http.Request) (error, string) {
 //	}
 //}
 
-
-
-
 //func ApiDeleteFile(w http.ResponseWriter, r *http.Request) {
 //	w.Header().Set("Access-Control-Allow-Credentials", "true")
 //	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:8888")
@@ -488,7 +451,7 @@ func getEmailFromCookie(r *http.Request) (error, string) {
 //	_, _ = w.Write([]byte("{\"status\" : \"\", \"status_description\" : \"Success deleted\"}"))
 //}
 
-func AddResponseWriterHeaders(w  http.ResponseWriter)  http.ResponseWriter {
+func AddResponseWriterHeaders(w http.ResponseWriter) http.ResponseWriter {
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Origin", "https://drukbox.club")
 	return w

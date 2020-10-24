@@ -7,28 +7,31 @@ import (
     "runtime"
 )
 
-func GenerateErrorMsg(err error, comment string) ([]byte, error) {
+func GenerateErrorMsg(err error, statusCode string, comment string) ([]byte, error) {
 	pc, _, line, _ := runtime.Caller(1)
 	details := runtime.FuncForPC(pc)
 	log.Printf("Error in function: %s\n", details.Name())
+	log.Printf("Line: %d\n\n", line)
 	log.Printf("With error msg: %s\n", err)
 	log.Printf("Comment: %s\n", comment)
-	log.Printf("Line: %d\n\n", line)
+
 
 	var response models.Response
 	response.Status = "error"
+	response.StatusCode = statusCode
 	response.StatusDescription = comment
 	responseByte, _ := json.Marshal(response)
 	return responseByte, nil
 }
 
-func GenerateOkMsg(data string, comment string) ([]byte, error) {
+func GenerateInfoMsg(data string, comment string) ([]byte, error) {
 	pc, _, line, _ := runtime.Caller(1)
 	details := runtime.FuncForPC(pc)
 	log.Printf("Info msg from function: %s\n", details.Name())
+	log.Printf("Line: %d\n\n", line)
 	log.Printf("Comment: %s\n", comment)
 	log.Printf("Data: %s\n", data)
-	log.Printf("Line: %d\n\n", line)
+
 
 	var response models.Response
 	response.Status = "ok"
