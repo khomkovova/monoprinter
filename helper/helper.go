@@ -11,7 +11,7 @@ func GenerateErrorMsg(err error, statusCode string, comment string) ([]byte, err
 	pc, _, line, _ := runtime.Caller(1)
 	details := runtime.FuncForPC(pc)
 	log.Printf("Error in function: %s\n", details.Name())
-	log.Printf("Line: %d\n\n", line)
+	log.Printf("Line: %d\n", line)
 	log.Printf("With error msg: %s\n", err)
 	log.Printf("Comment: %s\n", comment)
 
@@ -28,7 +28,7 @@ func GenerateInfoMsg(data string, comment string) ([]byte, error) {
 	pc, _, line, _ := runtime.Caller(1)
 	details := runtime.FuncForPC(pc)
 	log.Printf("Info msg from function: %s\n", details.Name())
-	log.Printf("Line: %d\n\n", line)
+	log.Printf("Line: %d\n", line)
 	log.Printf("Comment: %s\n", comment)
 	log.Printf("Data: %s\n", data)
 
