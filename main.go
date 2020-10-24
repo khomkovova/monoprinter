@@ -76,6 +76,7 @@ func initMongoDb(conf config.MongodbConf) {
 func initAll() error {
 
 	go CheckOrders()
+	go ReturnPages()
 	var conf config.Configuration
 	err := conf.ParseConfig()
 	if err != nil {

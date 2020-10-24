@@ -128,7 +128,7 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write(responseByte)
 				return
 			}
-			responseByte, _ := helper.GenerateInfoMsg("", "Status changed")
+			responseByte, _ := helper.GenerateInfoMsg("", "Status changed for file ")
 			_, _ = w.Write(responseByte)
 			return
 		}
