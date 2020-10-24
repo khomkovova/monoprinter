@@ -29,6 +29,9 @@ func CheckOrders() {
 			continue
 		}
 		for _, i := range result {
+			if i == nil {
+				continue
+			}
 			resp, err := bson.Marshal(i)
 			if err != nil {
 				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
