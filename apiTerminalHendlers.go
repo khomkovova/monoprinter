@@ -23,7 +23,7 @@ import (
 )
 
 func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("token")
+	cookie, err := r.Cookie("terminal_token")
 	if err != nil {
 		responseByte, _ := helper.GenerateErrorMsg(err, "error", "Can't get cookies")
 		_, _ = w.Write(responseByte)
