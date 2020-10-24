@@ -106,7 +106,7 @@ func (userInfo *UserInfo) addFile(uploadFile UploadFile) error {
 		fmt.Println(err)
 		return err
 	}
-	uploadFile.Info.UniqueId =  uploadFile.Info.UploadDate + "___" + "" + "___" + userInfo.Email + "___" + strconv.Itoa(uploadFile.Info.IdPrinter) + "___" + uploadFile.Info.Filename
+	uploadFile.Info.UniqueId =  uploadFile.Info.UploadDate + "___" + uploadFile.Info.PrintingDate + "___" + userInfo.Email + "___" + strconv.Itoa(uploadFile.Info.IdPrinter) + "___" + uploadFile.Info.Filename
 	err = uploadFile.Info.checkInfo()
 	if err != nil {
 		fmt.Println(err)
