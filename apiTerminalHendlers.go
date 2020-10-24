@@ -72,6 +72,9 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			for _, i := range result {
+				if i == nil{
+					continue
+				}
 				resp, err := bson.Marshal(i)
 				if err != nil {
 					_, _ = helper.GenerateErrorMsg(err, "error","Can't marshal interface")

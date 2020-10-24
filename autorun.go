@@ -136,7 +136,7 @@ func ReturnPages() {
 		for i := 0; i < len(filesReturnPages); i++ {
 			file = filesReturnPages[i]
 			var userInfo UserInfo
-			err := mongoUsersCollection.FindOne(context.TODO(), bson.M{"files.uniqid": file.UniqueId}).Decode(&userInfo)
+			err := mongoUsersCollection.FindOne(context.TODO(), bson.M{"files.uniqueid": file.UniqueId}).Decode(&userInfo)
 			if err != nil {
 				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
 				continue
