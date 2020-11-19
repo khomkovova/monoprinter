@@ -3,24 +3,13 @@ package main
 import (
 	"context"
 	_ "database/sql"
-	"github.com/khomkovova/MonoPrinter/constant"
-	"github.com/khomkovova/MonoPrinter/helper"
+	"github.com/khomkovova/MonoPrinter/customlogger"
+	"github.com/khomkovova/MonoPrinter/customresponse"
 	"github.com/khomkovova/MonoPrinter/liqpay"
-	//"fmt"
-	//"os"
-	//"path/filepath"
-
-	//"fmt"
 	"io/ioutil"
-	//"os"
-
-	//b64 "encoding/base64"
 	"encoding/json"
 	"errors"
-	//"fmt"
 	"go.mongodb.org/mongo-driver/bson"
-	//"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
 	"net/http"
 	"time"
 )
@@ -43,27 +32,35 @@ func ApiGoogleSignin(w http.ResponseWriter, r *http.Request) {
 	var googleOAuth GoogleOAuth
 	err := json.NewDecoder(r.Body).Decode(&googleOAuth)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + googleOAuth.Token)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	var tokenInfo Tokeninfo
 
 	err = json.NewDecoder(resp.Body).Decode(&tokenInfo)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	if tokenInfo.Error != "" {
-		responseByte, _ := helper.GenerateErrorMsg(errors.New(tokenInfo.Error), constant.ERROR_COOKIES, "Bad cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(tokenInfo.Error, customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	var newUsers UserInfo
@@ -77,8 +74,11 @@ func ApiGoogleSignin(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		err = newUsers.createNewUser()
 		if err != nil {
-			responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "Try to change account")
-			_, _ = w.Write(responseByte)
+			data, _ := json.Marshal(newUsers)
+			logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_ERROR, customresponse.ERROR_SERVER, string(data))
+			logger.Print()
+			customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+			_, _ = w.Write(customResp.GetByteResponse())
 			return
 		}
 		cookie := http.Cookie{Name: "token", Value: googleOAuth.Token}
@@ -92,30 +92,37 @@ func ApiGoogleSignin(w http.ResponseWriter, r *http.Request) {
 
 func ApiGetShortUserInfo(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
-	log.Println("debug() --- ", r.Body)
 	err, email := getEmailFromCookie(r)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	var user UserInfo
 	user.Email = email
 	err = user.getInfo()
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
-		_, _ = w.Write(responseByte)
+		data, _ := json.Marshal(user)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_ERROR, customresponse.ERROR_SERVER, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 
 	infoJson, err := user.makeStringJsonInfo()
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
-		_, _ = w.Write(responseByte)
+		data, _ := json.Marshal(user)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_ERROR, customresponse.ERROR_SERVER, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
-	responseByte, _ := helper.GenerateInfoMsg(infoJson, "")
-	_, _ = w.Write(responseByte)
+	customResp := customresponse.New(customresponse.OK_STATUS, "", "", infoJson)
+	_, _ = w.Write(customResp.GetByteResponse())
 	return
 }
 
@@ -123,8 +130,10 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
 	err, email := getEmailFromCookie(r)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 
@@ -132,21 +141,30 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 	user.Email = email
 	err = user.getInfo()
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
-		_, _ = w.Write(responseByte)
+		data, _ := json.Marshal(user)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_ERROR, customresponse.ERROR_SERVER, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 
 	err = r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad request")
-		_, _ = w.Write(responseByte)
+		data, _ := ioutil.ReadAll(r.Body)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 
 	if len(r.MultipartForm.Value["json"]) == 0 {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad request")
-		_, _ = w.Write(responseByte)
+		data, _ := ioutil.ReadAll(r.Body)
+		logger := customlogger.New("r.MultipartForm.Value['json']) == 0 ", customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	var uploadFile UploadFile
@@ -154,26 +172,34 @@ func ApiUploadFile(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal([]byte(jsonStr), &uploadFile.Info)
 
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad request")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, jsonStr)
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	file, _, err := r.FormFile("uploadfile")
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad request")
-		_, _ = w.Write(responseByte)
+		data, _ := ioutil.ReadAll(r.Body)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	uploadFile.File = file
 
 	err = user.addFile(uploadFile)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_USER, err.Error())
-		_, _ = w.Write(responseByte)
+		data, _ := json.Marshal(user)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_INFO, customresponse.ERROR_SERVER, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_USER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
-	responseByte, _ := helper.GenerateInfoMsg("", "File successfully uploaded")
-	_, _ = w.Write(responseByte)
+	customResp := customresponse.New(customresponse.OK_STATUS, "", "", "File successfully uploaded")
+	_, _ = w.Write(customResp.GetByteResponse())
 	return
 }
 
@@ -181,8 +207,10 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
 	err, email := getEmailFromCookie(r)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	type Count struct {
@@ -191,8 +219,11 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	count := Count{}
 	err = json.NewDecoder(r.Body).Decode(&count)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_REQUEST, "Bad request")
-		_, _ = w.Write(responseByte)
+		data, _ := ioutil.ReadAll(r.Body)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_REQUEST, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_REQUEST, "Bad Request", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	newOrder := liqpay.CreateNewOrder()
@@ -200,8 +231,10 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	newOrder.SetCountMoney(count.Count)
 	err = newOrder.MakeId()
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	orderId := newOrder.GetOrderId()
@@ -209,25 +242,34 @@ func ApiLiqpayData(w http.ResponseWriter, r *http.Request) {
 	user.Email = email
 	err = user.getInfo()
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
-		_, _ = w.Write(responseByte)
+		data, _ := json.Marshal(user)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_ERROR, customresponse.ERROR_SERVER, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	err = user.addOrder(orderId, "wait_accept")
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
-		_, _ = w.Write(responseByte)
+		data, _ := json.Marshal(user)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_ERROR, customresponse.ERROR_SERVER, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	err = newOrder.MakeRequestData()
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
-		_, _ = w.Write(responseByte)
+		data, _ := json.Marshal(newOrder)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_ERROR, customresponse.ERROR_SERVER, string(data))
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	requestData := newOrder.GetRequestData()
-	responseByte, _ := helper.GenerateInfoMsg(requestData, "File successfully uploaded")
-	_, _ = w.Write(responseByte)
+	customResp := customresponse.New(customresponse.OK_STATUS, "", "", requestData)
+	_, _ = w.Write(customResp.GetByteResponse())
 	return
 }
 
@@ -235,8 +277,10 @@ func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
 	err, _ := getEmailFromCookie(r)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 
@@ -246,20 +290,24 @@ func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
 		var file FileInfo
 		result, err := mongoUsersCollection.Distinct(context.TODO(), "files", bson.D{{}})
 		if err != nil {
-			responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
-			_, _ = w.Write(responseByte)
+			logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+			logger.Print()
+			customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+			_, _ = w.Write(customResp.GetByteResponse())
 			return
 		}
 		for _, i := range result {
 			resp, err := bson.Marshal(i)
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 
 			err = bson.Unmarshal(resp, &file)
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, string(resp))
+				logger.Print()
 				continue
 			}
 			file.UniqueId = ""
@@ -276,12 +324,12 @@ func ApiBusyTime(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		jsonByte, _ := json.Marshal(files)
-		responseByte, _ := helper.GenerateInfoMsg(string(jsonByte), "")
-		_, _ = w.Write(responseByte)
+		customResp := customresponse.New(customresponse.OK_STATUS, "", "", string(jsonByte))
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
-	responseByte, _ := helper.GenerateErrorMsg(errors.New("Bad request type"), constant.ERROR_REQUEST, "Bad request")
-	_, _ = w.Write(responseByte)
+	customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_REQUEST, "Bad request type", "")
+	_, _ = w.Write(customResp.GetByteResponse())
 	return
 }
 
@@ -289,8 +337,10 @@ func ApiTerminal(w http.ResponseWriter, r *http.Request) {
 	w = AddResponseWriterHeaders(w)
 	err, _ := getEmailFromCookie(r)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_COOKIES, "Bad cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 
@@ -298,8 +348,10 @@ func ApiTerminal(w http.ResponseWriter, r *http.Request) {
 
 		data, err := ioutil.ReadFile("terminal/config.json")
 		if err != nil {
-			responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
-			_, _ = w.Write(responseByte)
+			logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+			logger.Print()
+			customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+			_, _ = w.Write(customResp.GetByteResponse())
 			return
 		}
 		type TerminalConf struct {
@@ -313,20 +365,22 @@ func ApiTerminal(w http.ResponseWriter, r *http.Request) {
 			Terminals []TerminalConf `json:"Terminals"`
 		}
 		var terminals Terminals
-		err = json.Unmarshal([]byte(data), &terminals)
+		err = json.Unmarshal(data, &terminals)
 		if err != nil {
-			responseByte, _ := helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
-			_, _ = w.Write(responseByte)
+			logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+			logger.Print()
+			customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+			_, _ = w.Write(customResp.GetByteResponse())
 			return
 		}
 		jsonByte, _ := json.Marshal(terminals)
-		responseByte, _ := helper.GenerateInfoMsg(string(jsonByte), "")
-		_, _ = w.Write(responseByte)
+		customResp := customresponse.New(customresponse.OK_STATUS, "", "", string(jsonByte))
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 
-	responseByte, _ := helper.GenerateErrorMsg(errors.New("Bad request type"), constant.ERROR_REQUEST, "Bad request")
-	_, _ = w.Write(responseByte)
+	customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_REQUEST, "Bad request type", "")
+	_, _ = w.Write(customResp.GetByteResponse())
 	return
 }
 

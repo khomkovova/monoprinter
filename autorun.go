@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/khomkovova/MonoPrinter/constant"
-	"github.com/khomkovova/MonoPrinter/helper"
+	"github.com/khomkovova/MonoPrinter/customlogger"
+	"github.com/khomkovova/MonoPrinter/customresponse"
 	"github.com/khomkovova/MonoPrinter/liqpay"
 	"go.mongodb.org/mongo-driver/bson"
 	"log"
@@ -24,7 +24,8 @@ func CheckOrders() {
 		var orders []Order
 		result, err := mongoUsersCollection.Distinct(context.TODO(), "orders", bson.D{{}})
 		if err != nil {
-			_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+			logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+			logger.Print()
 			continue
 		}
 		if result == nil {
@@ -36,13 +37,15 @@ func CheckOrders() {
 			}
 			resp, err := bson.Marshal(i)
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 
 			err = bson.Unmarshal(resp, &order)
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 			orders = append(orders, order)
@@ -58,7 +61,8 @@ func CheckOrders() {
 			l.SetOrderId(o.Id)
 			err, orderInfo := l.GetOrderIdInfo()
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 			if orderInfo.Status != "success" {
@@ -66,19 +70,22 @@ func CheckOrders() {
 			}
 			err, email, count := l.GetEmailAndCountMoney()
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 			var u UserInfo
 			u.Email = email
 			err = u.addPage(count)
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 			err = u.changeOrderStatus(o.Id, "success")
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 
@@ -94,26 +101,32 @@ func ReturnPages() {
 		var files []FileInfo
 		var filesReturnPages []FileInfo
 		var file FileInfo
+
 		result, err := mongoUsersCollection.Distinct(context.TODO(), "files", bson.D{{}})
 		if err != nil {
-			_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+			logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+			logger.Print()
 			continue
 		}
 		if result == nil {
-			jsonByte, _ := json.Marshal(files)
-			_, _ = helper.GenerateInfoMsg(string(jsonByte), "")
 			continue
 		}
+
 		for _, i := range result {
+			if i == nil {
+				continue
+			}
 			resp, err := bson.Marshal(i)
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 
 			err = bson.Unmarshal(resp, &file)
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 			files = append(files, file)
@@ -133,12 +146,14 @@ func ReturnPages() {
 				continue
 			}
 		}
+
 		for i := 0; i < len(filesReturnPages); i++ {
 			file = filesReturnPages[i]
 			var userInfo UserInfo
 			err := mongoUsersCollection.FindOne(context.TODO(), bson.M{"files.uniqueid": file.UniqueId}).Decode(&userInfo)
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 			log.Print(userInfo)
@@ -146,18 +161,21 @@ func ReturnPages() {
 			user.Email = userInfo.Email
 			err = user.getInfo()
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 			err = user.addPage(file.NumberPage)
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+				logger.Print()
 				continue
 			}
 
 			_, err = mongoUsersCollection.UpdateOne(context.TODO(), bson.M{"files.uniqueid": file.UniqueId, "files.idprinter": file.IdPrinter}, bson.M{"$set": bson.M{"files.$.status": constant.STATUS_PAGES_RETURNED}})
 			if err != nil {
-				_, _ = helper.GenerateErrorMsg(err, constant.ERROR_SERVER, "")
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+				logger.Print()
 			}
 		}
 

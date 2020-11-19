@@ -17,7 +17,7 @@ const TIME_OFTEN_REPEAT_ADD_NEW_FILE = time.Second * 2
 const TIME_OFTEN_REPEAT_PRINT_FILE= time.Second * 2
 const TIME_LAYOUT = "2006-01-02T15:04:05"
 
-const ERROR_COOKIES  = "error_cookies"
-const ERROR_SERVER = "error_server"
-const ERROR_REQUEST = "error_request"
-const ERROR_USER  =  "error_user"
+
+const NEW_USER_BALANCE = 5
+const NEW_NULP_USER_BALANCE = 15
+const NULP_EMAIL  = "@lpnu.ua"

@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/khomkovova/MonoPrinter/helper"
+	"github.com/khomkovova/MonoPrinter/customlogger"
+	"github.com/khomkovova/MonoPrinter/customresponse"
 	"github.com/khomkovova/MonoPrinter/models"
 	"github.com/khomkovova/MonoPrinter/rsaparser"
 	_ "github.com/khomkovova/MonoPrinter/models"
@@ -12,9 +13,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	_"fmt"
-	"io/ioutil"
 	"log"
+	"io/ioutil"
 	"net/http"
 	"time"
 	"github.com/khomkovova/MonoPrinter/config"
@@ -25,15 +25,19 @@ import (
 func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("terminal_token")
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, "error", "Can't get cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 	sessionToken := cookie.Value
 	err, terminalId := decryptTerminalCookie(sessionToken)
 	if err != nil {
-		responseByte, _ := helper.GenerateErrorMsg(err, "error","Can't decrypt cookies")
-		_, _ = w.Write(responseByte)
+		logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_COOKIES, "")
+		logger.Print()
+		customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_COOKIES, "Bad Cookies", "")
+		_, _ = w.Write(customResp.GetByteResponse())
 		return
 	}
 
@@ -44,16 +48,19 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			var conf config.Configuration
 			err := conf.ParseConfig()
 			if err != nil {
-				responseByte, _ := helper.GenerateErrorMsg(err, "error","Can't parse config")
-				_, _ = w.Write(responseByte)
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+				logger.Print()
+				customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+				_, _ = w.Write(customResp.GetByteResponse())
 				return
 			}
 			bucketName := conf.GCP.BucketUsersFiles
 			var gcpFile models.GCPFile
 			gcpFile.FileUrl = "https://storage.googleapis.com/" + bucketName + "/" + uniqueid
 			jsonByte, _ := json.Marshal(gcpFile)
-			responseByte, _ := helper.GenerateInfoMsg(string(jsonByte), "")
-			_, _ = w.Write(responseByte)
+
+			customResp := customresponse.New(customresponse.OK_STATUS, "", "", string(jsonByte))
+			_, _ = w.Write(customResp.GetByteResponse())
 			return
 		} else {
 
@@ -61,14 +68,16 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			var file FileInfo
 			result, err := mongoUsersCollection.Distinct(context.TODO(), "files", bson.D{{}})
 			if err != nil {
-				responseByte, _ := helper.GenerateErrorMsg(err, "error","Can't run distinct command")
-				_, _ = w.Write(responseByte)
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_CRITICAL, customresponse.ERROR_SERVER, "")
+				logger.Print()
+				customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_SERVER, "", "")
+				_, _ = w.Write(customResp.GetByteResponse())
 				return
 			}
 			if result == nil {
 				jsonByte, _ := json.Marshal(files)
-				responseByte, _ := helper.GenerateInfoMsg(string(jsonByte), "")
-				_, _ = w.Write(responseByte)
+				customResp := customresponse.New(customresponse.OK_STATUS, "", "", string(jsonByte))
+				_, _ = w.Write(customResp.GetByteResponse())
 				return
 			}
 			for _, i := range result {
@@ -77,13 +86,15 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 				}
 				resp, err := bson.Marshal(i)
 				if err != nil {
-					_, _ = helper.GenerateErrorMsg(err, "error","Can't marshal interface")
+					logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, "Can't marshal interface")
+					logger.Print()
 					continue
 				}
 
 				err = bson.Unmarshal(resp, &file)
 				if err != nil {
-					_, _ = helper.GenerateErrorMsg(err, "error","Can't unmarshal data")
+					logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_SERVER, "Can't unmarshal interface")
+					logger.Print()
 					continue
 				}
 				files = append(files, file)
@@ -105,8 +116,8 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			jsonByte, _ := json.Marshal(files)
-			responseByte, _ := helper.GenerateInfoMsg(string(jsonByte), "")
-			_, _ = w.Write(responseByte)
+			customResp := customresponse.New(customresponse.OK_STATUS, "", "", string(jsonByte))
+			_, _ = w.Write(customResp.GetByteResponse())
 			return
 		}
 	}
@@ -121,23 +132,32 @@ func ApiTerminalFiles(w http.ResponseWriter, r *http.Request) {
 			var st status
 			err := json.NewDecoder(r.Body).Decode(&st)
 			if err != nil {
-				responseByte, _ := helper.GenerateErrorMsg(err, "error","Can't decode request")
-				_, _ = w.Write(responseByte)
+				data, _ := ioutil.ReadAll(r.Body)
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_REQUEST, string(data))
+				logger.Print()
+				customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_REQUEST, "Bad Request", "")
+				_, _ = w.Write(customResp.GetByteResponse())
 				return
 			}
 			_, err = mongoUsersCollection.UpdateOne(context.TODO(), bson.M{"files.uniqueid": uniqueid, "files.idprinter": terminalId}, bson.M{"$set": bson.M{"files.$.status": st.Status}})
 			if err != nil {
-				responseByte, _ := helper.GenerateErrorMsg(err, "error","Can't find file")
-				_, _ = w.Write(responseByte)
+				data, _ := ioutil.ReadAll(r.Body)
+				logger := customlogger.New(err.Error(), customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_REQUEST, string(data))
+				logger.Print()
+				customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_REQUEST, "Can't find file", "")
+				_, _ = w.Write(customResp.GetByteResponse())
 				return
 			}
-			responseByte, _ := helper.GenerateInfoMsg("", "Status changed for file ")
-			_, _ = w.Write(responseByte)
+			customResp := customresponse.New(customresponse.OK_STATUS, "", "", "Status changed for file " + uniqueid)
+			_, _ = w.Write(customResp.GetByteResponse())
 			return
 		}
 	}
-	responseByte, _ := helper.GenerateErrorMsg(errors.New("Bad request"), "error","Bad request")
-	_, _ = w.Write(responseByte)
+	data, _ := ioutil.ReadAll(r.Body)
+	logger := customlogger.New("Bad request", customlogger.LOG_SEVERITY_WARNING, customresponse.ERROR_REQUEST, string(data))
+	logger.Print()
+	customResp := customresponse.New(customresponse.ERROR_STATUS, customresponse.ERROR_REQUEST, "", "")
+	_, _ = w.Write(customResp.GetByteResponse())
 	return
 }
 
@@ -198,7 +218,7 @@ func getPrivateKey() (err error, key *rsa.PrivateKey) {
 
 	sEnc := base64.StdEncoding.EncodeToString(ciphertext)
 	_ = ioutil.WriteFile("config/terminalToken.key", []byte(sEnc), 0644)
-	log.Println(sEnc)
+	log.Println( "Terminal token: ", sEnc)
 	return nil, privateKey
 }
 

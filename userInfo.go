@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/khomkovova/MonoPrinter/constant"
 	"go.mongodb.org/mongo-driver/bson"
+	"strings"
+
 	//"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
@@ -16,16 +19,16 @@ import (
 )
 
 type UserInfo struct {
-	Username    string     `json:"username"`
-	Email       string     `json:"email"`
-	NumberPhone string     `json:"numberphone"`
-	NumberPages int        `json:"numberpages"`
-	Orders      []Order    `json:"orders"`
-	Files       []FileInfo `json:"files"`
-	Password    string     `json:"password"`
-	UserId    string     `json:"userid"`
-	Pictures    string     `json:"pictures"`
-	RegistrationTime string `json:"registration_time"`
+	Username         string     `json:"username"`
+	Email            string     `json:"email"`
+	NumberPhone      string     `json:"numberphone"`
+	NumberPages      int        `json:"numberpages"`
+	Orders           []Order    `json:"orders"`
+	Files            []FileInfo `json:"files"`
+	Password         string     `json:"password"`
+	UserId           string     `json:"userid"`
+	Pictures         string     `json:"pictures"`
+	RegistrationTime string     `json:"registration_time"`
 }
 
 type Order struct {
@@ -33,13 +36,18 @@ type Order struct {
 	Status string
 }
 
-var NEW_USER_BALANCE = 5
 func (userInfo *UserInfo) createNewUser() error {
 	if userInfo.Email == "" {
 		err := errors.New("Not set email")
 		return err
 	}
-	userInfo.NumberPages = NEW_USER_BALANCE
+	if strings.Contains(userInfo.Email, constant.NULP_EMAIL) {
+		userInfo.NumberPages = constant.NEW_NULP_USER_BALANCE
+	} else
+	{
+		userInfo.NumberPages = constant.NEW_USER_BALANCE
+	}
+
 	_, err := mongoUsersCollection.InsertOne(context.TODO(), userInfo)
 	if err != nil {
 		fmt.Println("Not insert new users")
@@ -106,7 +114,7 @@ func (userInfo *UserInfo) addFile(uploadFile UploadFile) error {
 		fmt.Println(err)
 		return err
 	}
-	uploadFile.Info.UniqueId =  uploadFile.Info.UploadDate + "___" + uploadFile.Info.PrintingDate + "___" + userInfo.Email + "___" + strconv.Itoa(uploadFile.Info.IdPrinter) + "___" + uploadFile.Info.Filename
+	uploadFile.Info.UniqueId = uploadFile.Info.UploadDate + "___" + uploadFile.Info.PrintingDate + "___" + userInfo.Email + "___" + strconv.Itoa(uploadFile.Info.IdPrinter) + "___" + uploadFile.Info.Filename
 	err = uploadFile.Info.checkInfo()
 	if err != nil {
 		fmt.Println(err)
