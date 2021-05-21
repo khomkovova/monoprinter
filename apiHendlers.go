@@ -507,6 +507,6 @@ func getEmailFromCookie(r *http.Request) (error, string) {
 
 func AddResponseWriterHeaders(w http.ResponseWriter) http.ResponseWriter {
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Access-Control-Allow-Origin", "https://drukbox.club")
+	w.Header().Set("Access-Control-Allow-Origin", "https://drukbox.xyz")
 	return w
 }
